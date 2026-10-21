@@ -1,0 +1,4 @@
+# Secrets et certificats générés : ne jamais pousser sur GitHub
+.env
+certs/
+ca.crt

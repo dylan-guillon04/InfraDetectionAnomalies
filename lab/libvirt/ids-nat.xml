@@ -1,0 +1,14 @@
+<!-- Réseau NAT dédié au lab : remplace "default" pour la victime.
+     L'hôte doit être en 192.168.122.1 : c'est l'IP du certificat d'Elasticsearch
+     et la cible de syslog-ng sur la victime. Incompatible avec "default" actif (même sous-réseau). -->
+<network>
+  <name>ids-nat</name>
+  <forward mode='nat'/>
+  <bridge name='virbr-ids' stp='on' delay='0'/>
+  <ip address='192.168.122.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.122.100' end='192.168.122.199'/>
+      <host mac='52:54:00:25:9a:97' name='victime' ip='192.168.122.206'/>
+    </dhcp>
+  </ip>
+</network>

@@ -1,0 +1,18 @@
+# === Secrets : ne JAMAIS pousser =========================================
+**/.env
+lab/lab.conf
+elk/certs/
+elk/ca.crt
+elk/elk-secrets.tgz
+elk/elastic.conf
+elk/suricata
+
+# === Binaires lourds (restent hors dépôt) ================================
+# Images de VM et sauvegardes de volumes Docker
+*.qcow2
+*.qcow2.bak
+*.tgz
+
+# === Divers ==============================================================
+.DS_Store
+*~

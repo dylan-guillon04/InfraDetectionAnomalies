@@ -1,0 +1,7 @@
+# lab/lab.conf — configuration LOCALE du lab, non versionnée (voir .gitignore).
+# À copier en « lab.conf » UNIQUEMENT si les gros fichiers (images *.qcow2 et le
+# dossier elk/ avec .env, certs et volumes *.tgz) ne sont pas à la racine du dépôt.
+#
+# Exemple : le dépôt est ~/cours/secu-info/projet-ids mais les assets restent
+# dans ~/cours/secu-info :
+#IDS_HOME="$HOME/cours/secu-info"
