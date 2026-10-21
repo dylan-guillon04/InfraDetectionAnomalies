@@ -70,7 +70,78 @@ La détection fonctionne même en option A (test : 53 échecs ingérés, alerte 
 
 ## 5. Réponse de l'administrateur
 
-Bloquer `10.10.10.30` · vérifier qu'aucune connexion n'a réussi (`Accepted password` dans `auth.log`) · imposer l'authentification par clé.
+Cette section couvre la chaîne complète : **alerte → notification → explication → réponse**.
+
+### 5.1 Alertes et notifications déclenchées
+
+| Plateforme | Règle | Niveau | Notifiée (Slack/courriel ≥ 10) |
+| --- | --- | --- | --- |
+| Wazuh | **5763** — brute force SSH | 10 | ✅ oui |
+| Wazuh | **2502** — échecs répétés (via syslog-ng) | 10 | ✅ oui |
+| ELK | « Lab - Brute-force SSH » (≥ 10 échecs / IP + compte) | haute | ❌ visible dans *Security → Alerts* uniquement (connecteurs payants, voir [détection ELK](../1-elk/03-detection.md#notifications--limite-de-la-licence-gratuite)) |
+
+Les deux règles Wazuh sont de niveau 10 : elles franchissent le seuil de l'intégration Slack et du courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) sans réglage supplémentaire. L'administrateur est donc prévenu **en dehors du dashboard**, sans avoir à le surveiller.
+
+### 5.2 Ce que reçoit l'administrateur
+
+Message type (exemple indicatif du contenu, la mise en forme exacte dépend de l'intégration) :
+
+```
+[Wazuh] Alerte niveau 10 — règle 5763
+Description : sshd: brute force trying to get access to the system. Authentication failed.
+Agent       : victime (004)
+Source      : 10.10.10.30
+Compte visé : victime
+Occurrences : 8 échecs en moins de 2 min
+```
+
+### 5.3 Explication pour l'administrateur
+
+| Question | Réponse |
+| --- | --- |
+| **Que s'est-il passé ?** | Une même IP (`10.10.10.30`) a enchaîné des échecs d'authentification SSH sur le compte `victime`, à un rythme impossible pour un humain. |
+| **Pourquoi est-ce une alerte ?** | Un utilisateur légitime se trompe 2 ou 3 fois ; dix échecs par minute sur un même compte révèlent un outil automatisé (hydra). Le regroupement par IP **et** compte distingue une attaque ciblée d'un balayage de comptes. |
+| **Quelle gravité ?** | Haute **si** une connexion a réussi : l'attaquant a alors un shell. Sans succès, c'est une tentative, pas encore une compromission. |
+| **Alerte confirmée ou faux positif ?** | Source interne connue (poste d'un collègue, script de sauvegarde mal configuré) → faux positif probable. IP inconnue, échecs sur plusieurs comptes, ou rythme régulier → intrusion à traiter. |
+| **Et après ?** | Le brute-force est un accès initial : il prépare les scénarios 4 et 5 (persistance, malware) s'il aboutit. |
+
+### 5.4 Actions de réponse
+
+**1. Qualifier : une connexion a-t-elle réussi ?** (priorité absolue)
+
+```bash
+# Sur la victime
+sudo grep "Accepted password" /var/log/auth.log | grep 10.10.10.30   # vide = aucun succès
+sudo grep "Failed password" /var/log/auth.log | awk '{print $9, $11}' | sort | uniq -c | sort -rn | head
+last -i | head                                                         # sessions récentes
+```
+
+Si un `Accepted password` apparaît pour `10.10.10.30` : traiter comme une **compromission** (changer le mot de passe, fermer les sessions, enchaîner avec les [attaques 4](04-modification-fichiers.md) et [5](05-malware-privileges.md) : recherche de persistance).
+
+**2. Contenir : bloquer la source.**
+
+```bash
+sudo ufw deny from 10.10.10.30 to any port 22      # ou : sudo iptables -I INPUT -s 10.10.10.30 -p tcp --dport 22 -j DROP
+```
+
+Alternative automatique : la **réponse active** de Wazuh (module `firewall-drop`) bloque l'IP à la détection de la règle 5763 ; à n'activer qu'après avoir listé les IP à ne jamais bloquer (administrateurs, supervision).
+
+**3. Durcir : imposer l'authentification par clé.**
+
+```bash
+# /etc/ssh/sshd_config.d/hardening.conf
+PasswordAuthentication no
+PermitRootLogin no
+MaxAuthTries 3
+```
+
+```bash
+sudo sshd -t && sudo systemctl reload ssh   # tester la config avant de recharger, garder une session ouverte
+```
+
+> Prérequis : avoir déposé sa clé publique (`ssh-copy-id`) **avant** de désactiver les mots de passe, sous peine de s'enfermer dehors.
+
+**4. Tracer : documenter l'incident** (IP, horodatage, compte visé, règle, décision) et vérifier que l'alerte est bien passée en *Closed* dans Kibana / traitée dans Wazuh.
 
 ## 6. Remise à zéro
 

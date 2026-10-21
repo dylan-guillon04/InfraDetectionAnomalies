@@ -80,9 +80,87 @@ Nmap done: 1 IP address (1 host up) scanned in 0.17 seconds
 - **Volume d'alertes de la signature.** `detection_filter` déclenche une alerte **par SYN au-delà du 50e** : un scan de 1000 ports produit ~950 alertes. Pour n'en garder qu'une par source et par fenêtre, remplacer `detection_filter:…` par `threshold:type both, track by_src, count 50, seconds 5` dans `local.rules`.
 - **ET Open ne détecte pas les scans** par défaut : c'est la raison d'être de la signature custom et de la règle de flux. Détail dans [détection ELK](../1-elk/03-detection.md#scan-de-ports).
 
+
 ## 5. Réponse de l'administrateur
 
-Bloquer `10.10.10.30` · n'exposer que les ports nécessaires (pare-feu) · corréler avec les attaques suivantes (le scan précède souvent un brute-force ou une attaque web depuis la même source).
+Cette section couvre la chaîne complète : **alerte → notification → explication → réponse**.
+
+### 5.1 Alertes et notifications déclenchées
+
+| Plateforme | Règle | Niveau par défaut | Notifiée (seuil ≥ 10) |
+| --- | --- | --- | --- |
+| Wazuh | **86601** — Suricata « LAB SCAN Possible TCP SYN port scan » (`sid:1000001`) | 3 | ❌ **non**, sans réglage |
+| ELK | « Lab - Scan de ports » (> 50 ports distincts / IP) et « Lab - Alerte Suricata » | moyenne/haute | ❌ *Security → Alerts* uniquement |
+
+Comme pour l'attaque web, l'alerte Suricata ne dépasse pas le seuil de notification par défaut. Un scan seul est une reconnaissance, pas une intrusion : on peut légitimement le notifier à un niveau plus bas (7), ou le réserver au tableau de bord. Pour **être prévenu** dès le scan, une règle locale rehausse l'alerte, et en **limite le volume** : `detection_filter` génère ~950 alertes pour 1 000 ports, il faut une seule notification.
+
+```xml
+<group name="local,recon,">
+  <rule id="100030" level="10" frequency="1" timeframe="300" ignore="300">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature">LAB SCAN</field>
+    <same_source_ip />
+    <description>Lab - Scan de ports TCP depuis une même source</description>
+    <mitre><id>T1046</id></mitre>
+  </rule>
+</group>
+```
+
+`ignore="300"` : une fois déclenchée, la règle se tait 5 minutes pour la même source, ce qui évite la rafale de 950 messages. Valider avec `wazuh-logtest` avant `wazuh-control restart`. Le remplacement de `detection_filter` par `threshold` dans `local.rules` (voir points d'attention) agit au niveau Suricata, à la source.
+
+### 5.2 Ce que reçoit l'administrateur
+
+Message type (exemple indicatif) :
+
+```
+[Wazuh] Alerte niveau 10 — règle 100030
+Description : Lab - Scan de ports TCP depuis une même source
+Agent       : victime (004)
+Source      : 10.10.10.30
+Signature   : LAB SCAN Possible TCP SYN port scan (nmap -sS)
+```
+
+### 5.3 Explication pour l'administrateur
+
+| Question | Réponse |
+| --- | --- |
+| **Que s'est-il passé ?** | Une même IP a envoyé plus de 50 paquets `SYN` en 5 secondes, vers des ports différents, sans finaliser la connexion (scan « demi-ouvert » `nmap -sS`). |
+| **Pourquoi est-ce une alerte ?** | Aucun paquet isolé n'est suspect ; c'est l'agrégation qui l'est. Un client normal contacte 22, 80 ou 443, jamais 1 000 ports en une fraction de seconde. Les deux capteurs la confirment : la signature custom (immédiate) et la règle ELK sur les flux (retardée d'environ 6 min). |
+| **Quelle gravité ?** | **Faible en soi, mais annonciatrice.** Le scan ne cause aucun dommage ; il révèle ce que l'attaquant sait désormais : ici **22/SSH et 80/HTTP**, soit les cibles des attaques 1 et 2. |
+| **Alerte confirmée ou faux positif ?** | Scanner de vulnérabilités ou outil de supervision (Nessus, Zabbix, découverte réseau) → faux positif : vérifier l'IP. Source inconnue → reconnaissance hostile. |
+| **Et après ?** | Surveiller **cette IP** : brute-force SSH ou attaque web dans les minutes ou heures suivantes. |
+
+### 5.4 Actions de réponse
+
+**1. Qualifier : la source est-elle légitime, et que fait-elle d'autre ?**
+
+```bash
+# Autres événements de la même IP sur la victime
+sudo grep "10.10.10.30" /var/log/auth.log | tail
+sudo grep "10.10.10.30" /var/log/nginx/access.log | tail
+```
+
+Dans Wazuh (*Threat Hunting*) ou Kibana (*Discover*) : filtrer sur `10.10.10.30` toutes sources confondues. **Une alerte de scan suivie d'un brute-force ou d'une attaque web depuis la même source est une intrusion en cours**, à traiter comme telle (voir [attaque 1](01-brute-force-ssh.md#5-réponse-de-ladministrateur) et [attaque 2](02-attaque-web.md#6-réponse-de-ladministrateur)).
+
+**2. Contenir : bloquer la source.**
+
+```bash
+sudo ufw deny from 10.10.10.30
+```
+
+**3. Réduire la surface d'attaque : n'exposer que le nécessaire.**
+
+```bash
+sudo ss -tlnp                       # ports réellement à l'écoute (ici : 22, 80)
+sudo ufw default deny incoming
+sudo ufw allow from <IP_ADMIN> to any port 22   # SSH restreint aux administrateurs
+sudo ufw allow 80/tcp
+sudo ufw enable
+```
+
+Tout port ouvert découvert qui n'a pas de raison d'être (service oublié) est à fermer ou à arrêter.
+
+**4. Corréler et surveiller.** Ajouter l'IP à une liste de surveillance : les alertes suivantes venant d'elle doivent être traitées en priorité. Le scan servant de signal précoce, c'est le moment de **renforcer** les défenses des services découverts (clés SSH, correctifs web) avant l'attaque.
 
 ## 6. Remise à zéro
 

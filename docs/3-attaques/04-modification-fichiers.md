@@ -56,8 +56,103 @@ Le détail de l'alerte 550 affiche le **diff** produit par `report_changes` : on
 
 ## 5. Réponse de l'administrateur
 
-Supprimer le compte `pirate` de `/etc/passwd` et le fichier `shell.php` · rechercher le vecteur d'entrée initial (corréler avec les scénarios 1-2 depuis la même source) · à ce stade, la machine est compromise : la reconstruire à partir d'une image saine est plus sûr qu'un nettoyage.
+Cette section couvre la chaîne complète : **alerte → notification → explication → réponse**.
 
+### 5.1 Alertes et notifications déclenchées
+
+| Plateforme | Règle | Niveau par défaut | Notifiée (seuil ≥ 10) |
+| --- | --- | --- | --- |
+| Wazuh | **550** — fichier surveillé modifié (`/etc/passwd`, diff `report_changes`) | 7 | ❌ **non**, sans réglage |
+| Wazuh | **554** — fichier ajouté (`/var/www/dvwa/shell.php`) | 5 | ❌ **non**, sans réglage |
+| ELK | aucune alerte (angle mort : zéro trace réseau) | — | — |
+
+Ces niveaux sont ceux par défaut de Wazuh ; ils sont faibles parce qu'une modification de fichier est **banale** en général (mises à jour, configuration). Elle devient critique sur des fichiers précis. Il faut donc les rehausser **ciblément**, plutôt que d'abaisser le seuil global (qui noierait l'administrateur) :
+
+```xml
+<group name="local,syscheck,persistence,">
+  <rule id="100040" level="12">
+    <if_sid>550</if_sid>
+    <field name="file">^/etc/passwd$|^/etc/shadow$|^/etc/sudoers$</field>
+    <description>Lab - Fichier de comptes modifié : persistance possible</description>
+    <mitre><id>T1565.001</id></mitre>
+  </rule>
+  <rule id="100041" level="12">
+    <if_sid>554</if_sid>
+    <field name="file">^/var/www/.+\.php$</field>
+    <description>Lab - Nouveau fichier PHP dans le site : webshell possible</description>
+    <mitre><id>T1505.003</id></mitre>
+  </rule>
+</group>
+```
+
+```bash
+# Sur le manager : valider puis recharger
+/var/ossec/bin/wazuh-logtest
+/var/ossec/bin/wazuh-control restart
+```
+
+À ce niveau 12, ces règles passent le seuil Slack/courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) : c'est la seule voie de notification de ce scénario, ELK étant muet.
+
+### 5.2 Ce que reçoit l'administrateur
+
+Message type (exemple indicatif) :
+
+```
+[Wazuh] Alerte niveau 12 — règle 100040
+Description : Lab - Fichier de comptes modifié : persistance possible
+Agent       : victime (004)
+Fichier     : /etc/passwd
+Ajouté      : pirate:x:0:0::/root:/bin/bash
+```
+
+Le diff `report_changes` est dans le message : l'administrateur voit **ce qui** a changé sans ouvrir le dashboard.
+
+### 5.3 Explication pour l'administrateur
+
+| Question | Réponse |
+| --- | --- |
+| **Que s'est-il passé ?** | Quelqu'un avec des droits root **sur la machine** a ajouté un compte `pirate` d'UID 0 (= root) à `/etc/passwd`, et déposé `shell.php`, un fichier qui exécute toute commande passée dans l'URL. |
+| **Pourquoi est-ce une alerte ?** | Ces fichiers ne changent presque jamais hors maintenance. Un compte d'UID 0 inconnu est un compte root caché ; un `.php` apparu hors déploiement est une porte dérobée. |
+| **Quelle gravité ?** | **Critique : la machine est déjà compromise.** L'attaquant est entré avant ; ces actions sont de la *persistance*. Il peut revenir à tout moment, avec les droits root, y compris par `http://10.10.10.10/shell.php?cmd=id`. |
+| **Alerte confirmée ou faux positif ?** | Vérifier le journal de changements de l'équipe : un administrateur légitime a-t-il créé ce compte ou déployé ce fichier ? Un compte d'UID 0 qui n'est pas `root` et un `.php` d'une ligne appelant `system()` n'ont aucune explication légitime. |
+| **Et après ?** | Remonter au **vecteur d'entrée** : c'est l'étape suivante de la réponse. |
+
+### 5.4 Actions de réponse
+
+**1. Qualifier : mesurer l'étendue (avant de nettoyer, pour ne pas détruire les preuves).**
+
+```bash
+# Comptes d'UID 0 et comptes récents
+awk -F: '$3==0 {print}' /etc/passwd
+sudo find /etc -newermt "-1 day" -type f -ls 2>/dev/null
+# Webshells : fichiers PHP récents ou contenant des fonctions d'exécution
+sudo find /var/www -name "*.php" -mtime -1 -ls
+sudo grep -rnE "system\(|exec\(|shell_exec|passthru|eval\(" /var/www/dvwa --include=*.php | grep -v "vulnerabilities/exec"
+# Le webshell a-t-il servi ?
+sudo grep "shell.php" /var/log/nginx/access.log
+# Sessions et clés SSH ajoutées
+last -i | head ; sudo find / -name authorized_keys -newermt "-1 day" 2>/dev/null
+```
+
+Copier `/etc/passwd`, `shell.php` et les logs sur un support externe **avant** suppression (preuves).
+
+**2. Contenir : couper l'accès.**
+
+```bash
+sudo ufw deny from 10.10.10.30
+sudo pkill -u pirate 2>/dev/null     # fermer d'éventuelles sessions du compte caché
+```
+
+**3. Éradiquer.**
+
+```bash
+sudo sed -i '/^pirate:/d' /etc/passwd
+sudo rm -f /var/www/dvwa/shell.php
+```
+
+**4. Trouver le vecteur d'entrée.** Corréler avec les scénarios 1 et 2 depuis la même source : `Accepted password` après un brute-force ([attaque 1](01-brute-force-ssh.md#5-réponse-de-ladministrateur)), ou SQLi/LFI réussie ([attaque 2](02-attaque-web.md#6-réponse-de-ladministrateur)). Sans le vecteur, la faille reste ouverte et l'attaquant reviendra.
+
+**5. Reconstruire plutôt que nettoyer.** Un attaquant root a pu modifier d'autres éléments (binaires, modules du noyau, tâches cron) que la FIM ne surveille pas. La machine est **à reconstruire à partir d'une image saine**, secrets renouvelés (mots de passe, clés SSH, identifiants de base de données).
 ## 6. Remise à zéro
 
 ```bash
