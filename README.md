@@ -8,7 +8,7 @@ Projet de sécurité des réseaux. Dans un laboratoire virtualisé, une machine 
 > Elasticsearch/Kibana (`*.tgz`), secrets (`.env`, certificats). Deux façons de monter le lab :
 >
 > - **Restauration rapide** — télécharger le bundle des VM et volumes, le placer à la racine du
->   dépôt, puis `./lab/lab.sh up`. **Bundle (VM + volumes)** : _lien de téléchargement à ajouter_.
+>   dépôt, puis `./lab/lab.sh up`. **Bundle (VM + volumes)** : [lien de télégarchement (onedrive UQAC)](https://uqacca0-my.sharepoint.com/:u:/g/personal/mmarthy_etu_uqac_ca/IQBLox2eeaHCR5zKeKxiRO_6AeFrZEApTsxpMBcexRM6mBo?e=acb5xD).
 > - **Reconstruction complète** — suivre les guides [partie 1](docs/1-elk/01-installation.md) et
 >   [partie 2](docs/2-wazuh/01-deploiement.md), sans aucun bundle.
 >
