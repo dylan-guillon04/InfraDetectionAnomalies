@@ -52,6 +52,26 @@ Le mot de passe `elastic` est lu dans `elk/.env`, jamais écrit dans le script.
 | Lab - Scan de ports TCP depuis une seule source | `lab-port-scan` | Seuil + cardinalité | `logs-suricata.eve-*` | 3 | T1046 |
 | Lab - Tentative d'attaque web (SQLi, LFI, scanner) | `lab-web-attack` | Requête | `logs-nginx.access-*` | 2 | T1190 |
 
+### Lien vers la documentation (champ *References*)
+
+Chaque règle `lab-*` porte une **URL de référence** (*About → Reference URLs*) vers la fiche
+d'attaque correspondante de ce dépôt. Depuis une alerte, un analyste atteint ainsi en un clic le
+mode opératoire de l'attaque et la réponse attendue de l'administrateur.
+
+Le champ **Description** d'une règle est du texte brut : il n'interprète pas le Markdown, donc un
+`[lien](url)` y resterait affiché littéralement. C'est le champ **References**, prévu pour cela,
+qui rend l'URL cliquable.
+
+| Règle | Fiche liée |
+| --- | --- |
+| `lab-ssh-bruteforce` | [01-brute-force-ssh.md](../3-attaques/01-brute-force-ssh.md) |
+| `lab-web-attack` | [02-attaque-web.md](../3-attaques/02-attaque-web.md) |
+| `lab-port-scan` | [03-scan-de-ports.md](../3-attaques/03-scan-de-ports.md) |
+| `lab-suricata-promotion` | [00-scenarios.md](../3-attaques/00-scenarios.md) |
+
+![rule-reference-url](img/rule-reference-url.png)
+
+
 ### Promotion des alertes Suricata
 
 Quand Suricata détecte une attaque, il écrit une alerte dans `eve.json`, et syslog-ng la transmet à Elasticsearch. Mais ce n'est encore qu'un document parmi d'autres : la page **Alertes** d'Elastic Security n'affiche que les alertes produites par ses propres règles.
