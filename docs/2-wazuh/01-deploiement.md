@@ -223,7 +223,7 @@ sont remplacées par :
 
 ![Bloc global après modification](img/wazuh-mail-global.png)
 
-Le seuil d'envoi passe de 12 à **10**, comme pour Discord, dans le bloc `<alerts>` :
+Le seuil d'envoi passe de 12 à **10**, comme pour Slack, dans le bloc `<alerts>` :
 
 ```xml
 <email_alert_level>10</email_alert_level>
@@ -232,6 +232,8 @@ Le seuil d'envoi passe de 12 à **10**, comme pour Discord, dans le bloc `<alert
 ![Bloc alerts : email_alert_level à 10](img/wazuh-mail-niveau.png)
 
 Puis Save et Restart Manager.
+
+![Exemple de mail envoyé](img/wazuh-mail-sended.png)
 
 ### VirusTotal
 

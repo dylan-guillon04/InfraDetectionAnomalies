@@ -55,6 +55,8 @@ hydra affiche `all children were disabled` : c'est la pénalité OpenSSH 9.8 qui
 
 **Elastic** : alertes concentrées à **99 % sur `victime`** ; l'alerte de seuil « Lab - Brute-force SSH » se déclenche sur les échecs ingérés.
 
+![Exemple de mail envoyé](../2-wazuh/img/wazuh-mail-sended.png)
+
 ## 4. OpenSSH 9.8 et la pénalité anti-brute-force
 
 Debian 13 active par défaut les `PerSourcePenalties` d'OpenSSH 9.8 : après quelques échecs, sshd pénalise l'IP source et **rejette ses connexions suivantes** (`drop connection … penalty` dans `auth.log`), d'où le `all children were disabled` de hydra. Ces connexions rejetées ne produisent pas de `Failed password` et ne comptent pas pour la détection. **C'est un point à mentionner dans le rapport** : l'hôte freine nativement le brute-force.
