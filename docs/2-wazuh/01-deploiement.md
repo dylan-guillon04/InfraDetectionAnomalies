@@ -134,7 +134,9 @@ vi /var/ossec/etc/ossec.conf
 /var/ossec/bin/wazuh-control restart
 ```
 
-**Slack** (bonus « automatisation des alertes ») : envoi de toute alerte de niveau ≥ 10.
+### Slack
+
+Bonus « automatisation des alertes » : envoi de toute alerte de niveau ≥ 10.
 
 ```xml
 <integration>
@@ -145,9 +147,95 @@ vi /var/ossec/etc/ossec.conf
 </integration>
 ```
 
-**Courriel** : bloc `<global>` avec `<email_notification>yes</email_notification>`, `<smtp_server>` et `<email_to>`. Wazuh n'authentifie pas auprès du serveur SMTP : il faut un relais local (Postfix) vers un fournisseur de messagerie.
+### Courriel
 
-**VirusTotal** (scénario 5) : analyse automatique de chaque fichier signalé par le module d'intégrité.
+Encore une fois comme pour le serveru wazuh nous utilisons notre propre instance, vous pouvez utilisez le guide suivant en remplacent par votre instance.
+Wazuh n'authentifie pas auprès du serveur SMTP, il lui faut un relais sans authentification, joignable depuis le conteneur du manager. On déploie donc un relais Postfix sur le même VPS, qui signe les messages (DKIM) et les remet directement au serveur du destinataire.
+
+```mermaid
+flowchart LR
+    M["wazuh.manager"] -->|"SMTP 25<br/>réseau single-node_default"| P["Postfix<br/>(wazuh-smtp)"]
+    P -->|"SMTP 25, signé DKIM"| D["Serveur du destinataire<br/>(Outlook UQAC)"]
+```
+
+**1. Relais Postfix**, déployé comme service Compose dans Dokploy :
+
+```yaml
+services:
+  postfix:
+    image: boky/postfix:v4.4.0
+    restart: unless-stopped
+    hostname: mail.grdr.fr
+    environment:
+      ALLOWED_SENDER_DOMAINS: grdr.fr
+      POSTFIX_myhostname: mail.grdr.fr
+      DKIM_AUTOGENERATE: "true"
+      DKIM_SELECTOR: wazuh
+    volumes:
+      - dkim-keys:/etc/opendkim/keys
+    networks:
+      wazuh:
+        aliases: [wazuh-smtp]
+
+networks:
+  wazuh:
+    external: true
+    name: single-node_default
+
+volumes:
+  dkim-keys:
+```
+
+- Seuls les conteneurs du réseau Wazuh peuvent l'utiliser, il ne peut pas servir de relais ouvert.
+- Le manager le joint par l'alias `wazuh-smtp`.
+- La clé DKIM est générée au premier démarrage : `docker exec <conteneur postfix> cat /etc/opendkim/keys/grdr.fr.txt`.
+
+**2. DNS de `grdr.fr`** (Cloudflare), pour que les messages ne soient pas classés en indésirables :
+
+Test du relais seul, avant de toucher à Wazuh :
+
+```bash
+docker exec <conteneur postfix> sh -c 'printf "Subject: Test relais Wazuh\n\nTest" | sendmail -f wazuh@grdr.fr rgouraud@etu.uqac.ca'
+docker logs --tail 20 <conteneur postfix> 2>&1 | grep -E "status=|DKIM"
+```
+
+Résultat attendu : `DKIM-Signature field added (s=wazuh, d=grdr.fr)` puis `status=sent`.
+
+**3. Configuration du manager**, depuis le dashboard : **Server management → Settings → Edit configuration**.
+
+![Menu Server management → Settings](img/wazuh-mail-menu.png)
+
+![Page Configuration : bouton Edit configuration en haut à droite](img/wazuh-mail-edit-configuration.jpg)
+
+L'éditeur affiche l'`ossec.conf` du manager. Les valeurs d'exemple du bloc `<global>` :
+
+![Bloc global avant modification : valeurs example.wazuh.com](img/wazuh-mail-avant.png)
+
+sont remplacées par :
+
+```xml
+<email_notification>yes</email_notification>
+<smtp_server>wazuh-smtp</smtp_server>
+<email_from>wazuh@grdr.fr</email_from>
+<email_to>rgouraud@etu.uqac.ca</email_to>
+<email_maxperhour>12</email_maxperhour>
+```
+
+![Bloc global après modification](img/wazuh-mail-global.png)
+
+Le seuil d'envoi passe de 12 à **10**, comme pour Discord, dans le bloc `<alerts>` :
+
+```xml
+<email_alert_level>10</email_alert_level>
+```
+
+![Bloc alerts : email_alert_level à 10](img/wazuh-mail-niveau.png)
+
+Puis Save et Restart Manager.
+
+### VirusTotal
+
+Scénario 5 : analyse automatique de chaque fichier signalé par le module d'intégrité.
 
 ```xml
 <integration>
@@ -157,8 +245,6 @@ vi /var/ossec/etc/ossec.conf
   <alert_format>json</alert_format>
 </integration>
 ```
-
-*(Notifications Discord/courriel et VirusTotal : configurées et validées au scénario 5, le 21/10/2026.)*
 
 ## Vérification
 
