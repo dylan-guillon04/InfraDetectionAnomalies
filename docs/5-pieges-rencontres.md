@@ -68,11 +68,11 @@ curl -s --cacert ca.crt -u $AUTH -X POST "$ES/_ingest/pipeline/logs-system.auth-
 | `/var/log/auth.log` absent | Debian 13 journalise dans journald par défaut | Installer un démon syslog qui écrit `auth.log` |
 | Échec du `bind` d'Elasticsearch sur `192.168.122.1` | Le réseau libvirt `default` n'est pas encore actif | Lancer la stack ELK après le démarrage du lab |
 | Kali joint Elasticsearch | Kali possède une carte sur le réseau NAT libvirt | Ne garder que la carte `lab-net` sur Kali |
-| Les VM n'obtiennent aucune adresse IP (NetworkManager : `ip-config-unavailable`) | ufw actif sur l'hôte : il bloque DHCP et DNS sur les bridges libvirt | Règles ufw de [lancer le lab](00-lancer-le-lab.md#ufw) |
+| Les VM n'obtiennent aucune adresse IP (NetworkManager : `ip-config-unavailable`) | ufw actif sur l'hôte : il bloque DHCP et DNS sur les bridges libvirt | Règles ufw de [lancer le lab](0-lancer-le-lab.md#ufw) |
 | Aucun log reçu dans Elasticsearch ni Wazuh après relance de la victime ; `auth.log` figé | syslog-ng démarré à la main mais jamais activé (`systemctl is-enabled syslog-ng` → `disabled`) : il ne redémarre pas au boot | `systemctl enable --now syslog-ng` sur la victime. Corrigé dans `debian13.qcow2` le 21/10/2026 |
 | Agent Wazuh qui ne démarre pas, de façon aléatoire (`start operation timed out`, `Another instance is locking this process`) | VM éteinte pendant que `wazuh-control start` tournait : le verrou `/var/ossec/var/start-script-lock` reste sur le disque. Il bloque le démarrage dès que le PID qu'il contient existe au boot suivant | Supprimer le verrou. Intégré à l'image : un `ExecStartPre` le supprime à chaque démarrage du service |
 | Relance de `lab.sh up` : `tar: certs/… Permission denied` | Le conteneur `setup` passe `elk/certs/` en root:root 750 | Corrigé dans `lab.sh` (teste seulement la présence du dossier) |
-| `virsh define debian13.xml` échoue sur un autre PC | Type de machine `pc-q35-noble`, propre au QEMU d'Ubuntu | Utiliser les définitions portables de `lab/libvirt/` (machine `q35`), via `lab/lab.sh` ([lancer le lab](00-lancer-le-lab.md)) |
+| `virsh define debian13.xml` échoue sur un autre PC | Type de machine `pc-q35-noble`, propre au QEMU d'Ubuntu | Utiliser les définitions portables de `lab/libvirt/` (machine `q35`), via `lab/lab.sh` ([lancer le lab](0-lancer-le-lab.md)) |
 
 ## Limites identifiées côté ELK
 

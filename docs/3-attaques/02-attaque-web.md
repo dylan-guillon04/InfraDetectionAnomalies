@@ -1,6 +1,6 @@
 # Attaque 2 — Attaque web (SQLi, LFI)
 
-> Mode opératoire du scénario 2. Contexte et justification : [scénarios](../2-wazuh/02-scenarios.md#scénario-2--attaque-web-injection-sql-lfi-). Prérequis : lab démarré (`lab/lab.sh up`).
+> Mode opératoire du scénario 2. Contexte et justification : [scénarios](00-scenarios.md#scénario-2--attaque-web-injection-sql-lfi-). Prérequis : lab démarré (`lab/lab.sh up`).
 
 - **But** : exploiter DVWA par injection SQL et inclusion de fichier local (MITRE T1190), et le détecter côté **ELK** (règle « Lab - Attaque web ») et **Wazuh** (Suricata).
 - **Cible** : `http://10.10.10.10`, DVWA en sécurité *Low*.
@@ -90,7 +90,7 @@ Dans Discover, les requêtes `nginx.access` portent le user-agent `sqlmap/1.10.6
 
 - **Session + sécurité *Low* obligatoires.** Sans le cookie de l'étape 1, les requêtes sont redirigées (302) et aucune attaque n'a lieu.
 - **Capteurs complémentaires.** Suricata analyse les paquets ; la règle ELK relit l'URL décodée par nginx.
-- **HTTP en clair.** Suricata voit le contenu ; en HTTPS, seules les lignes nginx resteraient exploitables (voir [bilan](../03-bilan-elk-vs-wazuh.md#limites-du-projet)).
+- **HTTP en clair.** Suricata voit le contenu ; en HTTPS, seules les lignes nginx resteraient exploitables (voir [bilan](../4-bilan-elk-vs-wazuh.md#limites-du-projet)).
 
 ## 6. Réponse de l'administrateur
 

@@ -1,6 +1,6 @@
 # Attaque 4 — Modification de fichiers sensibles
 
-> Mode opératoire du scénario 4. Contexte et justification : [scénarios](../2-wazuh/02-scenarios.md#scénario-4--modification-de-fichiers-sensibles-). Prérequis : lab démarré (`lab/lab.sh up`).
+> Mode opératoire du scénario 4. Contexte et justification : [scénarios](00-scenarios.md#scénario-4--modification-de-fichiers-sensibles-). Prérequis : lab démarré (`lab/lab.sh up`).
 
 - **But** : simuler un attaquant **déjà présent** sur la victime qui se maintient — compte root caché (MITRE T1136.001) et webshell (T1505.003) —, et le détecter par la **surveillance d'intégrité des fichiers** de **Wazuh** (syscheck/FIM).
 - **Particularité** : aucune trace réseau. Ni Suricata, ni nginx, ni `auth.log` ne voient ces actions — **ELK ne détecte rien ici**. Seul un HIDS avec FIM les révèle. C'est l'intérêt du scénario.

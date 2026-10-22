@@ -1,6 +1,6 @@
 # Partie 1.3 — Détection avec Elastic Security
 
-> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../03-bilan-elk-vs-wazuh.md) explique ce choix.
+> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
 
 
 ## Qui détecte quoi
@@ -113,10 +113,17 @@ Cette détection est complémentaire de Suricata. Suricata analyse les paquets �
 | **Security → Règles** → une règle → **Résultats d'exécution** | Prouve qu'une règle a tourné, même sans alerte |
 | Discover sur l'index `.alerts-security.alerts-default` | Requêtes libres sur les alertes ; base du dashboard personnalisé |
 
-> 📸 Captures à ajouter :
-> - `img/alerts-overview.png` : liste des alertes après les cinq scénarios
-> - `img/alert-ssh-detail.png` : détail d'une alerte de brute-force SSH
-> - `img/rules-custom.png` : les quatre règles custom en état « Succeeded »
+![Page Alerts d'Elastic Security : les alertes des cinq scénarios, avec histogramme et filtres](img/alerts-main-view.png)
+
+Vue principale des alertes, après les cinq scénarios.
+
+![Détail d'une alerte de brute-force SSH : IP source et compte visé, événements liés](img/ssh-alert-details.png)
+
+Détail d'une alerte « Lab - Brute-force SSH » : l'IP `10.10.10.30` et le compte ciblé.
+
+![Les quatre règles lab-* en état « Succeeded » dans Security → Rules](img/custom-rules.png)
+
+Les quatre règles `lab-*` s'exécutent sans erreur (état « Succeeded »), preuve qu'elles tournent même sans alerte.
 
 ## Notifications : limite de la licence gratuite
 
@@ -127,7 +134,7 @@ Les contournements possibles :
 - la **licence d'essai de 30 jours**, qui débloque les connecteurs, mais seulement le temps de l'essai ;
 - un **script externe** qui interroge `.alerts-security.alerts-default` et relaie les nouvelles alertes.
 
-Wazuh, lui, envoie les alertes par courriel et vers Slack **nativement et gratuitement**. C'est l'un des arguments de la bascule (voir le [bilan](../03-bilan-elk-vs-wazuh.md)) : les notifications sont traitées dans la [partie 2](../2-wazuh/01-deploiement.md#notifications).
+Wazuh, lui, envoie les alertes par courriel et vers Slack **nativement et gratuitement**. C'est l'un des arguments de la bascule (voir le [bilan](../4-bilan-elk-vs-wazuh.md)) : les notifications sont traitées dans la [partie 2](../2-wazuh/01-deploiement.md#notifications).
 
 ## Pourquoi pas Elastic Defend
 

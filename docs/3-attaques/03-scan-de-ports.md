@@ -1,6 +1,6 @@
 # Attaque 3 — Scan de ports
 
-> Mode opératoire du scénario 3. Contexte et justification : [scénarios](../2-wazuh/02-scenarios.md#scénario-3--scan-de-ports-). Prérequis : lab démarré (`lab/lab.sh up`).
+> Mode opératoire du scénario 3. Contexte et justification : [scénarios](00-scenarios.md#scénario-3--scan-de-ports-). Prérequis : lab démarré (`lab/lab.sh up`).
 
 - **But** : cartographier les ports TCP ouverts de la victime (MITRE T1046, reconnaissance), et le détecter côté **ELK** (règles « Lab - Scan de ports » et « Lab - Alerte Suricata ») et **Wazuh** (Suricata, `sid:1000001`).
 - **Cible** : `10.10.10.10`.

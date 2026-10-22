@@ -1,11 +1,11 @@
 # Partie 1.1 — Installation d'Elasticsearch et Kibana
 
-> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../03-bilan-elk-vs-wazuh.md) explique ce choix.
+> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
 
 
-> **Relancer le lab existant ?** Ce guide décrit l'installation initiale. Pour redémarrer la stack à partir des sauvegardes, utiliser `lab/lab.sh` : voir [lancer le lab](../00-lancer-le-lab.md#restaurer-nest-pas-réinstaller), qui liste les étapes ci-dessous déjà incluses dans la sauvegarde.
+> **Relancer le lab existant ?** Ce guide décrit l'installation initiale. Pour redémarrer la stack à partir des sauvegardes, utiliser `lab/lab.sh` : voir [lancer le lab](../0-lancer-le-lab.md#restaurer-nest-pas-réinstaller), qui liste les étapes ci-dessous déjà incluses dans la sauvegarde.
 
-Elasticsearch et Kibana sont déployés en Docker sur l'**hôte Ubuntu** qui héberge les machines virtuelles du lab. Le fichier `elk/docker-compose.yml` est dérivé du compose officiel d'Elastic, ramené à un seul nœud.
+Elasticsearch et Kibana sont déployés en Docker sur l'**hôte Ubuntu** qui héberge les machines virtuelles du lab. Le fichier `elk/compose.yaml` est dérivé du compose officiel d'Elastic, ramené à un seul nœud.
 
 ## Pourquoi ce placement
 
@@ -175,7 +175,7 @@ Le document stocké contient alors les champs ECS extraits par le pipeline :
 "event":   { "category": ["authentication"], "action": "ssh_login", "outcome": "failure" }
 ```
 
-Sans le champ `"input":{"type":"log"}`, le pipeline ne parse rien (voir [pièges rencontrés](../04-pieges-rencontres.md)).
+Sans le champ `"input":{"type":"log"}`, le pipeline ne parse rien (voir [pièges rencontrés](../5-pieges-rencontres.md)).
 
 Ce data stream de test est ensuite supprimé, pour repartir propre :
 

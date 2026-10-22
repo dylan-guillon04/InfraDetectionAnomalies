@@ -120,7 +120,7 @@ Les fichiers `debian13.xml` et `kali.xml` à la racine sont les exports bruts du
 | Pas de chemin d'émulateur | Il varie selon la distribution (`/usr/libexec/qemu-kvm` sur Fedora/RHEL) ; libvirt choisit le bon |
 | Affichage VNC au lieu de SPICE, sans son ni redirection USB | SPICE n'est pas disponible partout ; le reste est inutile au lab |
 | RAM : victime 8 → 4 Go, Kali 4 → 2 Go | Tenir sur un PC de 16 Go avec Elasticsearch et Kibana |
-| Kali sans carte NAT | Kali ne doit pas pouvoir joindre Elasticsearch (voir [pièges](04-pieges-rencontres.md)) |
+| Kali sans carte NAT | Kali ne doit pas pouvoir joindre Elasticsearch (voir [pièges](5-pieges-rencontres.md)) |
 | Réseaux `ids-nat` et `ids-lab-net` | Ne pas modifier le réseau `default` de l'hôte |
 
 Les adresses MAC et les emplacements PCI des cartes sont conservés : les interfaces gardent leurs noms dans les VM (`enp1s0` pour le NAT, `enp7s0` pour le lab), dont dépendent NetworkManager et Suricata.
@@ -142,7 +142,7 @@ Le script ne rejoue aucun guide : il **restaure** un lab déjà construit. Tout 
 | [2.1](2-wazuh/01-deploiement.md) | Agent Wazuh enrôlé, lecture de `security-collected.log` et `eve.json` | disque de la victime | ✅ inclus |
 | [2.1](2-wazuh/01-deploiement.md) | FIM temps réel (`/etc/passwd`, `/var/www/dvwa`…) | disque de la victime | ✅ inclus |
 | [2.1](2-wazuh/01-deploiement.md) | Notifications Slack / courriel, VirusTotal | manager Wazuh (VPS) | ⬜ à configurer (scénario 5) |
-| [2.2](2-wazuh/02-scenarios.md) | Les attaques des cinq scénarios | — | à lancer à la main depuis Kali |
+| [2.2](3-attaques/00-scenarios.md) | Les attaques des cinq scénarios | — | à lancer à la main depuis Kali |
 
 Les cibles des attaques (nginx, DVWA, MariaDB, SSH) et Suricata, qui écoute sur `enp7s0`, sont dans le disque de la victime.
 
@@ -163,7 +163,7 @@ Procédure pour en ajouter une, depuis la racine du dépôt (`projet-ids/`, où 
 
 1. **Partir d'un overlay neuf**, pour ne pas figer dans l'image les traces des tests : `./lab/lab.sh down`, puis `./lab/lab.sh reset`, puis `./lab/lab.sh up`.
 2. **Faire uniquement la modification** dans la victime, et la valider (`suricata -T`, `systemctl status`…).
-3. **Arrêter les services avant d'éteindre la VM** : `systemctl stop wazuh-agent suricata syslog-ng`, puis `poweroff`. Un arrêt pendant le démarrage de Wazuh laisse un verrou dans l'image (voir [pièges](04-pieges-rencontres.md)).
+3. **Arrêter les services avant d'éteindre la VM** : `systemctl stop wazuh-agent suricata syslog-ng`, puis `poweroff`. Un arrêt pendant le démarrage de Wazuh laisse un verrou dans l'image (voir [pièges](5-pieges-rencontres.md)).
 4. **Fusionner l'overlay dans l'image du projet** :
 
 ```bash
@@ -201,4 +201,4 @@ Les commandes de vérification des guides (`curl … $ES`, comptage des document
 | Elasticsearch refuse de démarrer : `bind … 192.168.122.1` | Le réseau `ids-nat` n'était pas actif : relancer `./lab.sh up` |
 | Une VM démarre sans réseau | Dans la VM : `nmcli device connect enp1s0` (ou `enp7s0`) |
 
-Les autres problèmes déjà rencontrés sont dans [pièges rencontrés](04-pieges-rencontres.md).
+Les autres problèmes déjà rencontrés sont dans [pièges rencontrés](5-pieges-rencontres.md).

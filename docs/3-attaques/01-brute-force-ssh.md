@@ -1,6 +1,6 @@
 # Attaque 1 — Brute-force SSH
 
-> Mode opératoire du scénario 1. Contexte et justification : [scénarios](../2-wazuh/02-scenarios.md#scénario-1--brute-force-ssh-). Prérequis : lab démarré (`lab/lab.sh up`).
+> Mode opératoire du scénario 1. Contexte et justification : [scénarios](00-scenarios.md#scénario-1--brute-force-ssh-). Prérequis : lab démarré (`lab/lab.sh up`).
 
 - **But** : deviner un mot de passe SSH par essais répétés (MITRE T1110.001), et le détecter côté **Wazuh** (règles 5763 / 2502) et **ELK** (règle « Lab - Brute-force SSH »).
 - **Cible** : `10.10.10.10`, compte `victime`.
@@ -64,7 +64,7 @@ Debian 13 active par défaut les `PerSourcePenalties` d'OpenSSH 9.8 : après que
 | **A — garder la pénalité** (défaut) | `hydra … -t 1 -W 1 …` (un essai à la fois) | réaliste ; détection plus lente à atteindre le seuil |
 | **B — désactiver** | `PerSourcePenalties no` dans `sshd_config` + `systemctl restart ssh` | démo nette ; modifie la posture de la victime |
 
-La détection fonctionne même en option A (test : 53 échecs ingérés, alerte ELK déclenchée). Pour rendre l'option B permanente, l'intégrer à l'image ([modifier l'image](../00-lancer-le-lab.md#modifier-limage-de-la-victime)).
+La détection fonctionne même en option A (test : 53 échecs ingérés, alerte ELK déclenchée). Pour rendre l'option B permanente, l'intégrer à l'image ([modifier l'image](../0-lancer-le-lab.md#modifier-limage-de-la-victime)).
 
 > `could not resolve address: 10.10.10.10` = faute de frappe dans l'IP (souvent `O` au lieu de `0`).
 

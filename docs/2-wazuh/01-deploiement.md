@@ -1,6 +1,6 @@
-# Partie 2.1 — Déploiement et intégration de Wazuh
+# Partie 2 — Déploiement et intégration de Wazuh
 
-> **Partie 2 — Wazuh.** Après avoir monté la chaîne ELK ([partie 1](../1-elk/01-installation.md)), on mène les scénarios d'intrusion sous Wazuh, beaucoup plus direct pour un lab de cette taille. Le [bilan](../03-bilan-elk-vs-wazuh.md) détaille pourquoi.
+> **Partie 2 — Wazuh.** Après avoir monté la chaîne ELK ([partie 1](../1-elk/01-installation.md)), on mène les scénarios d'intrusion sous Wazuh, beaucoup plus direct pour un lab de cette taille. Le [bilan](../4-bilan-elk-vs-wazuh.md) détaille pourquoi.
 
 Wazuh est une plateforme de sécurité open source qui assure plusieurs fonctions :
 
@@ -36,6 +36,12 @@ Le serveur Wazuh tourne sur un **VPS OVH**, déjà utilisé pour d'autres projet
 
 - **L'agent de la victime** joint le manager par le nom `sec.grdr.fr`, sur les ports 1514 (événements) et 1515 (enrôlement), ouverts sur le pare-feu réseau d'OVH.
 - **Le dashboard** est publié sur `wazuh.grdr.fr` par un tunnel Cloudflare, derrière une authentification Cloudflare Access. Il n'est jamais exposé directement sur Internet.
+
+> **Pour reproduire cette partie**, remplacez `sec.grdr.fr` (manager) et `wazuh.grdr.fr` (dashboard)
+> par **votre propre instance Wazuh** : une VM, un VPS, ou même un déploiement local sur l'hôte.
+> Seule l'adresse du manager, passée à l'agent via `WAZUH_MANAGER` lors de l'enrôlement, doit
+> correspondre à la vôtre ; le reste du guide est identique. Le tunnel Cloudflare n'est qu'un
+> confort d'accès au dashboard, pas une nécessité.
 
 ## Côté serveur (VPS)
 
@@ -116,7 +122,7 @@ Par défaut, syscheck analyse `/etc` toutes les 12 heures. Pour une détection i
 systemctl restart wazuh-agent
 ```
 
-*(Configuration intégrée à l'image de la victime : voir [lancer le lab](../00-lancer-le-lab.md#modifier-limage-de-la-victime).)*
+*(Configuration intégrée à l'image de la victime : voir [lancer le lab](../0-lancer-le-lab.md#modifier-limage-de-la-victime).)*
 
 ## Notifications
 
@@ -160,4 +166,10 @@ vi /var/ossec/etc/ossec.conf
 - **Threat Hunting**, filtre `agent.name: victime` : les événements remontent.
 - **Configuration Assessment** : le scan CIS Debian 13 s'exécute automatiquement. Score obtenu : **42 %**, ce qui illustre la valeur ajoutée de Wazuh sans aucune configuration.
 
-> 📸 Captures à ajouter : `img/wazuh-agents.png` (agent actif), `img/wazuh-sca.png` (score CIS).
+![Dashboard Wazuh → Agents : l'agent « victime » à l'état Active](img/wazuh-active-agent.png)
+
+L'agent `victime` est enrôlé et *Active* dans le dashboard.
+
+![Configuration Assessment de Wazuh : score CIS de 42 % sur la victime Debian 13](img/wazuh-score-cis.png)
+
+Le scan CIS Debian 13 tourne automatiquement : **42 %** de conformité, sans aucune configuration — la valeur ajoutée immédiate de Wazuh.

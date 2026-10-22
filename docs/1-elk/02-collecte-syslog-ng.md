@@ -1,6 +1,6 @@
 # Partie 1.2 — Collecte des logs avec syslog-ng
 
-> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../03-bilan-elk-vs-wazuh.md) explique ce choix.
+> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
 
 
 syslog-ng est le collecteur imposé par le sujet. Sur la victime, il lit les fichiers de logs de sécurité et les envoie à Elasticsearch. La configuration est dans [`syslog-ng/elastic.conf`](../../syslog-ng/elastic.conf).
@@ -164,6 +164,8 @@ Dans **Discover**, avec la vue de données « Tous les logs » :
 event.dataset:"system.auth" and event.outcome:"failure" and source.ip:"10.10.10.30"
 ```
 
-Filtrer sur `event.dataset` et non sur `data_stream.dataset` : ce second champ n'est pas renseigné dans nos documents (voir [pièges](../04-pieges-rencontres.md)).
+Filtrer sur `event.dataset` et non sur `data_stream.dataset` : ce second champ n'est pas renseigné dans nos documents (voir [pièges](../5-pieges-rencontres.md)).
 
-> 📸 Capture à ajouter : `img/discover-auth-ecs.png`, un document `system.auth` déplié montrant les champs ECS.
+![Document system.auth déplié dans Discover : champs ECS source.ip, user.name, event.outcome extraits par le pipeline](img/discover-auth-ecs.png)
+
+Un document `system.auth` déplié : la ligne brute d'`auth.log` est devenue des champs **ECS** (`source.ip`, `user.name`, `process.name`, `event.outcome`), exploitables par les règles de détection.
