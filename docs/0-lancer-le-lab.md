@@ -1,6 +1,6 @@
 # Lancer le lab
 
-Cette page sert à **relancer le lab déjà construit** sur n'importe quel PC Linux, à partir des images des VM et des sauvegardes Elasticsearch. La construction pas à pas est décrite dans les parties [1 (ELK)](1-elk/01-installation.md) et [2 (Wazuh)](2-wazuh/01-deploiement.md).
+Cette page sert à relancer le lab déjà construit sur n'importe quel PC Linux, à partir des images des VM et des sauvegardes Elasticsearch. La construction pas à pas est décrite dans les parties [1 (ELK)](1-elk/01-installation.md) et [2 (Wazuh)](2-wazuh/01-deploiement.md).
 
 Un seul script s'occupe de tout : `lab/lab.sh`. Il ne dépend pas de la distribution et ne demande pas `sudo`.
 
@@ -24,7 +24,7 @@ projet-ids/                  ← LE DÉPÔT GIT (et dossier de travail du lab)
 
 Tout vit dans `projet-ids/`. Les fichiers versionnés (doc, `compose.yaml`, scripts…) partent
 sur git ; les gros fichiers et les secrets (`*.qcow2`, `.env`, `certs/`, `*.tgz`) sont dans le
-**même dossier mais ignorés par git** (voir `.gitignore`) — ils ne sont pas poussés et se
+**même dossier mais ignorés par git** (voir `.gitignore`), ils ne sont pas poussés et se
 transmettent à part. `lab.sh` les trouve sans configuration. (Pour les ranger ailleurs, pointer
 `IDS_HOME` dessus via `lab/lab.conf` ; voir `lab/lab.conf.example`.)
 
@@ -76,7 +76,7 @@ Le premier `up` est plus long : il importe les deux images (≈ 10 Go), restaure
 | Accès | Adresse |
 | --- | --- |
 | Kibana | `http://localhost:5601`, compte `elastic`, mot de passe `ELASTIC_PASSWORD` dans `elk/.env` |
-| Victime | `192.168.122.206` depuis l'hôte · `10.10.10.10` depuis Kali |
+| Victime | `192.168.122.206` depuis l'hôte, `10.10.10.10` depuis Kali |
 | Kali | `10.10.10.30`, uniquement sur le réseau du lab |
 | Écrans des VM | `virt-manager` (connexion « QEMU/KVM »), ou `virt-viewer -c qemu:///system ids-kali` |
 | Wazuh | `https://wazuh.grdr.fr` (sur le VPS, indépendant du script) |
@@ -102,13 +102,13 @@ flowchart LR
 
 - **Tout est préfixé `ids-`** (VM, réseaux, pool de disques, projet Docker) : le lab ne touche à aucune autre VM ni conteneur de l'hôte.
 - **Deux réseaux dédiés.** `ids-nat` donne Internet à la victime (agent Wazuh) et lui permet de joindre Elasticsearch. `ids-lab-net` n'a aucune sortie : Kali ne peut atteindre que la victime. Les adresses sont fixées par réservation DHCP sur les adresses MAC.
-- **Images de base intactes.** Les images sont importées dans le pool `ids-lab` (`/var/lib/libvirt/images/ids-lab`), puis chaque VM écrit dans un **overlay** qcow2 posé dessus. `reset` supprime simplement les overlays : on retrouve exactement l'état livré, ce qui permet de rejouer un scénario sur une victime propre.
+- **Images de base intactes.** Les images sont importées dans le pool `ids-lab` (`/var/lib/libvirt/images/ids-lab`), puis chaque VM écrit dans un overlay qcow2 posé dessus. `reset` supprime simplement les overlays : on retrouve exactement l'état livré, ce qui permet de rejouer un scénario sur une victime propre.
 - **Volumes Docker restaurés une seule fois.** Si `ids-elk_esdata01` existe déjà, il n'est pas écrasé. Pour repartir de la sauvegarde : `./lab.sh destroy`, puis `docker volume rm ids-elk_esdata01 ids-elk_kibanadata`, puis `./lab.sh up`.
 - **Vérifications.** Avant de démarrer, le script contrôle les prérequis de l'hôte. Après, il attend que la victime obtienne son adresse, et signale un pare-feu bloquant si elle ne vient pas.
 
 ### Pourquoi les adresses sont imposées
 
-L'hôte doit être joignable en **`192.168.122.1`** : c'est l'adresse inscrite dans le certificat d'Elasticsearch et celle que vise syslog-ng sur la victime. Le réseau `ids-nat` reprend donc ce sous-réseau. Or le réseau `default` de libvirt l'utilise souvent aussi : s'il est actif, le script propose de le désactiver le temps du lab (`virsh net-start default` pour le relancer).
+L'hôte doit être joignable en `192.168.122.1` : c'est l'adresse inscrite dans le certificat d'Elasticsearch et celle que vise syslog-ng sur la victime. Le réseau `ids-nat` reprend donc ce sous-réseau. Or le réseau `default` de libvirt l'utilise souvent aussi : s'il est actif, le script propose de le désactiver le temps du lab (`virsh net-start default` pour le relancer).
 
 ### Différences avec les VM d'origine
 
@@ -127,7 +127,7 @@ Les adresses MAC et les emplacements PCI des cartes sont conservés : les interf
 
 ## Jusqu'où va le script
 
-Le script ne rejoue aucun guide : il **restaure** un lab déjà construit. Tout ce que les guides font installer se trouve déjà soit dans les sauvegardes ELK, soit dans le disque de la victime.
+Le script ne rejoue aucun guide : il restaure un lab déjà construit. Tout ce que les guides font installer se trouve déjà soit dans les sauvegardes ELK, soit dans le disque de la victime.
 
 | Guide | Contenu | Où il se trouve | État |
 | --- | --- | --- | --- |
@@ -146,7 +146,7 @@ Le script ne rejoue aucun guide : il **restaure** un lab déjà construit. Tout 
 
 Les cibles des attaques (nginx, DVWA, MariaDB, SSH) et Suricata, qui écoute sur `enp7s0`, sont dans le disque de la victime.
 
-Toute modification faite **dans une VM** est conservée par `down` / `up`, mais effacée par `reset`. Pour qu'elle devienne permanente et soit partagée avec tout le monde, il faut l'intégrer à l'image (ci-dessous).
+Toute modification faite dans une VM est conservée par `down` / `up`, mais effacée par `reset`. Pour qu'elle devienne permanente et soit partagée avec tout le monde, il faut l'intégrer à l'image (ci-dessous).
 
 ### Modifier l'image de la victime
 
@@ -178,7 +178,7 @@ qemu-img commit /tmp/overlay.qcow2 && rm /tmp/overlay.qcow2
 
 ### Restaurer n'est pas réinstaller
 
-Les étapes ✅ ci-dessus ne doivent **pas** être rejouées. Surtout, il ne faut pas régénérer le `.env` : les mots de passe sont enregistrés dans les données, et la victime connaît déjà la CA et le mot de passe `syslog-ng`.
+Les étapes ✅ ci-dessus ne doivent pas être rejouées. Surtout, il ne faut pas régénérer le `.env` : les mots de passe sont enregistrés dans les données, et la victime connaît déjà la CA et le mot de passe `syslog-ng`.
 
 Correspondances avec les guides :
 
@@ -195,7 +195,7 @@ Les commandes de vérification des guides (`curl … $ES`, comptage des document
 | Symptôme | Solution |
 | --- | --- |
 | `Erreur : …` au lancement | Le script indique la commande à lancer |
-| « aucun bail DHCP sur ids-nat » : les VM n'ont pas d'IP | Le pare-feu de l'hôte bloque DHCP/DNS sur les bridges. Avec **ufw** (actif par défaut sur CachyOS, souvent sur Ubuntu), voir ci-dessous. firewalld (Fedora) n'est pas concerné : libvirt y déclare ses bridges tout seul |
+| « aucun bail DHCP sur ids-nat » : les VM n'ont pas d'IP | Le pare-feu de l'hôte bloque DHCP/DNS sur les bridges. Avec ufw (actif par défaut sur CachyOS, souvent sur Ubuntu), voir ci-dessous. firewalld (Fedora) n'est pas concerné : libvirt y déclare ses bridges tout seul |
 | La victime a une IP mais pas Internet (agent Wazuh déconnecté) | Transit (`FORWARD`) bloqué par ufw ou Docker. Avec ufw : `sudo ufw route allow in on virbr-ids`. Sans ufw, avec Docker : `sudo iptables -I DOCKER-USER -i virbr-ids -j ACCEPT` et `sudo iptables -I DOCKER-USER -o virbr-ids -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT` |
 | `ids-elk-es01-1` redémarre en boucle | `docker logs ids-elk-es01-1` ; souvent la RAM : baisser `ES_MEM_LIMIT` dans `elk/.env` |
 | Elasticsearch refuse de démarrer : `bind … 192.168.122.1` | Le réseau `ids-nat` n'était pas actif : relancer `./lab.sh up` |

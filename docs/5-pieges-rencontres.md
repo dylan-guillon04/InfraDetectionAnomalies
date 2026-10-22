@@ -2,7 +2,7 @@
 
 Problèmes réellement rencontrés pendant la mise en place, avec leur diagnostic et leur solution. Les sections ELK concernent la [partie 1](1-elk/01-installation.md), les sections Wazuh la [partie 2](2-wazuh/01-deploiement.md).
 
-## ELK — Elasticsearch et Kibana
+## ELK : Elasticsearch et Kibana
 
 | Symptôme | Cause | Solution |
 | --- | --- | --- |
@@ -10,9 +10,9 @@ Problèmes réellement rencontrés pendant la mise en place, avec leur diagnosti
 | Commandes `curl` vers `localhost:9200` sans aucune sortie | Commandes lancées sur la victime au lieu de l'hôte (`localhost` = la machine courante) | Lancer les commandes ELK sur l'hôte, depuis `elk/` |
 | Cluster en état « jaune » permanent | Chaque index demande une réplique, impossible à placer sur un nœud unique | Template `logs@custom` avec `number_of_replicas: 0` |
 | Kibana bloqué sur « Ajouter des intégrations » | Écran d'accueil de la première connexion | Cliquer « Explore on my own » |
-| Pas d'alertes visibles dans Discover | Discover affiche les logs bruts, pas les alertes des règles ; fenêtre de temps trop courte | Alertes dans **Security → Détections → Alertes** ; élargir la période |
+| Pas d'alertes visibles dans Discover | Discover affiche les logs bruts, pas les alertes des règles ; fenêtre de temps trop courte | Alertes dans Security → Détections → Alertes ; élargir la période |
 
-## ELK — Pipelines d'ingestion (format ECS)
+## ELK : Pipelines d'ingestion (format ECS)
 
 | Symptôme | Cause | Solution |
 | --- | --- | --- |
@@ -29,15 +29,15 @@ curl -s --cacert ca.crt -u $AUTH -X POST "$ES/_ingest/pipeline/logs-system.auth-
   -d '{"docs":[{"_source":{"input":{"type":"log"},"message":"<ligne de log>"}}]}'
 ```
 
-## ELK — syslog-ng
+## ELK : syslog-ng
 
 | Symptôme | Cause | Solution |
 | --- | --- | --- |
-| Événements Suricata `stats` envoyés malgré le filtre | Avec `type(string)`, syslog-ng compare le message **entier** au motif | Ajouter `flags(substring)` |
+| Événements Suricata `stats` envoyés malgré le filtre | Avec `type(string)`, syslog-ng compare le message entier au motif | Ajouter `flags(substring)` |
 | Conflit si deux configurations lisent le même fichier | syslog-ng identifie les sources par leur nom de fichier | `persist-name()` distinct dans chaque source |
 | Conflit « systemd-journal namespace already in use » | `system()` déclaré dans une configuration additionnelle | Ne lire que des `file()` dans les configurations custom |
 
-## ELK — Règles de détection Elastic Security
+## ELK : Règles de détection Elastic Security
 
 | Symptôme | Cause | Solution |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ curl -s --cacert ca.crt -u $AUTH -X POST "$ES/_ingest/pipeline/logs-system.auth-
 
 | Symptôme | Cause | Solution |
 | --- | --- | --- |
-| Recherche de la règle 5712 sans résultat lors du brute-force SSH | Les identifiants de règles varient selon la version et le format du log | Règles observées sur ce lab : **5763** (brute force) et **2502** (via le collecteur) |
+| Recherche de la règle 5712 sans résultat lors du brute-force SSH | Les identifiants de règles varient selon la version et le format du log | Règles observées sur ce lab : 5763 (brute force) et 2502 (via le collecteur) |
 | Seules les alertes Suricata remontent, pas les flux ni les statistiques | Les décodeurs Wazuh ne retiennent que `event_type: alert` | Comportement voulu ; les flux sont exploités côté ELK |
 | L'agent ne lit pas `eve.json` | Permissions du fichier | Vérifier `chmod 644` sur `eve.json` |
 | Le dashboard affiche « API connections could be down » après changement du mot de passe `wazuh-wui` | Mot de passe à reporter à trois endroits : API, compose, `wazuh.yml` (montage depuis l'hôte) | Éditer `wazuh.yml` côté hôte, pas dans le conteneur |

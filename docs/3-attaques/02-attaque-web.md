@@ -1,8 +1,8 @@
-# Attaque 2 — Attaque web (SQLi, LFI)
+# Attaque 2 : Attaque web (SQLi, LFI)
 
 > Mode opératoire du scénario 2. Contexte et justification : [scénarios](00-scenarios.md#scénario-2--attaque-web-injection-sql-lfi-). Prérequis : lab démarré (`lab/lab.sh up`).
 
-- **But** : exploiter DVWA par injection SQL et inclusion de fichier local (MITRE T1190), et le détecter côté **ELK** (règle « Lab - Attaque web ») et **Wazuh** (Suricata).
+- **But** : exploiter DVWA par injection SQL et inclusion de fichier local (MITRE T1190), et le détecter côté ELK (règle « Lab - Attaque web ») et Wazuh (Suricata).
 - **Cible** : `http://10.10.10.10`, DVWA en sécurité *Low*.
 
 ## 1. Préparation
@@ -42,13 +42,13 @@ sqlmap -u "http://10.10.10.10/vulnerabilities/sqli/?id=1&Submit=Submit" --cookie
 
 ## 3. Vérifications
 
-**Victime** — requêtes journalisées par nginx :
+**Victime**, requêtes journalisées par nginx :
 
 ```bash
 sudo grep -E "UNION|OR '1'='1|etc/passwd|sqlmap|Nikto" /var/log/nginx/access.log | tail
 ```
 
-**Hôte** — ingestion dans Elasticsearch :
+**Hôte**, ingestion dans Elasticsearch :
 
 ```bash
 cd ~/cours/secu-info/projet-ids/elk
@@ -57,17 +57,17 @@ curl -s --cacert ca.crt -u "$AUTH" \
   "https://localhost:9200/logs-nginx.access-default/_count?q=source.ip:10.10.10.30%20AND%20@timestamp:%3Enow-10m"
 ```
 
-**Wazuh** (`wazuh.grdr.fr` → Threat Hunting, `agent.name: victime`) : alertes Suricata ET Open sur SQLi/LFI/scanners (groupe `ids`). Les lignes nginx passent par le collecteur et ne sont pas décodées par les règles `web` natives — pour cela, ajouter sur la victime une source `localfile` directe sur `/var/log/nginx/access.log`.
+**Wazuh** (`wazuh.grdr.fr` → Threat Hunting, `agent.name: victime`) : alertes Suricata ET Open sur SQLi/LFI/scanners (groupe `ids`). Les lignes nginx passent par le collecteur et ne sont pas décodées par les règles `web` natives, pour cela, ajouter sur la victime une source `localfile` directe sur `/var/log/nginx/access.log`.
 
 **Kibana** (`localhost:5601`) :
 - *Discover* : `event.dataset:"nginx.access" and source.ip:"10.10.10.30" and (url.original:(*UNION* or *%27* or *etc/passwd*) or user_agent.original:(*sqlmap* or *Nikto*))`
-- *Security → Alerts* : alerte **« Lab - Tentative d'attaque web »** (règle de requête, laisser 1–2 min).
+- *Security → Alerts* : alerte « Lab - Tentative d'attaque web » (règle de requête, laisser 1–2 min).
 
 ## 4. Résultat obtenu
 
 Attaque jouée le 21/10/2026 (SQLi, LFI, `nikto`, `sqlmap`), détection confirmée des deux côtés.
 
-Les requêtes apparaissent dans nginx avec le user-agent de l'outil, et le volume ingéré confirme l'intensité (**8 207 documents** `nginx.access` en 10 min) :
+Les requêtes apparaissent dans nginx avec le user-agent de l'outil, et le volume ingéré confirme l'intensité (8 207 documents `nginx.access` en 10 min) :
 
 ```
 10.10.10.30 - - [21/Oct/2026:14:28:16] "GET /vulnerabilities/sqli/?id=1%27%20ORDER%20BY%206--%20- ..." 500 "sqlmap/1.10.6#stable"
@@ -76,7 +76,7 @@ Les requêtes apparaissent dans nginx avec le user-agent de l'outil, et le volum
 
 ![Page Alerts de Kibana : règle « Lab - Tentative d'attaque web » déclenchée, host victime à 99,5 %](img/02-attaque-web/dashboard-elastic.png)
 
-**Elastic** : la règle « Lab - Tentative d'attaque web » se déclenche (*high*, risk 73, source `10.10.10.30`) — **207 alertes**, à **99,5 %** sur `victime`.
+**Elastic** : la règle « Lab - Tentative d'attaque web » se déclenche (*high*, risk 73, source `10.10.10.30`), 207 alertes, à 99,5 % sur `victime`.
 
 ![Discover filtré sur nginx.access et 10.10.10.30 : user-agent sqlmap mis en évidence](img/02-attaque-web/kibana-logs-filter-nginx-access.png)
 
@@ -84,7 +84,7 @@ Dans Discover, les requêtes `nginx.access` portent le user-agent `sqlmap/1.10.6
 
 ![Liste d'événements Wazuh de l'agent victime : alertes Suricata HTTP (règle 86601)](img/02-attaque-web/event-list-wazuh.png)
 
-**Wazuh** : la détection remonte par **Suricata** (règle `86601` : `SURICATA HTTP Unexpected Request body`…), conforme à la remarque de l'étape 3.
+**Wazuh** : la détection remonte par Suricata (règle `86601` : `SURICATA HTTP Unexpected Request body`…), conforme à la remarque de l'étape 3.
 
 ## 5. Points d'attention
 
@@ -94,16 +94,16 @@ Dans Discover, les requêtes `nginx.access` portent le user-agent `sqlmap/1.10.6
 
 ## 6. Réponse de l'administrateur
 
-Cette section couvre la chaîne complète : **alerte → notification → explication → réponse**.
+Cette section couvre la chaîne complète : alerte → notification → explication → réponse.
 
 ### 6.1 Alertes et notifications déclenchées
 
 | Plateforme | Règle | Niveau par défaut | Notifiée (seuil ≥ 10) |
 | --- | --- | --- | --- |
-| Wazuh | **86601** — alerte Suricata (signatures ET Open SQLi / LFI / scanners) | 3 | ❌ **non**, sans réglage (voir ci-dessous) |
+| Wazuh | **86601**, alerte Suricata (signatures ET Open SQLi / LFI / scanners) | 3 | ❌ non, sans réglage (voir ci-dessous) |
 | ELK | « Lab - Tentative d'attaque web » (*high*, risk 73) | haute | ❌ *Security → Alerts* uniquement |
 
-**Point d'attention : une alerte web ne dépasse pas le seuil par défaut.** La règle Suricata 86601 est de faible niveau (3) : avec un seuil Slack/courriel à 10, l'administrateur ne serait **pas** prévenu d'une attaque web. Il faut une règle locale qui rehausse le niveau des alertes de la catégorie web (`/var/ossec/etc/rules/local_rules.xml` sur le manager) :
+**Point d'attention : une alerte web ne dépasse pas le seuil par défaut.** La règle Suricata 86601 est de faible niveau (3) : avec un seuil Slack/courriel à 10, l'administrateur ne serait pas prévenu d'une attaque web. Il faut une règle locale qui rehausse le niveau des alertes de la catégorie web (`/var/ossec/etc/rules/local_rules.xml` sur le manager) :
 
 ```xml
 <group name="local,web,attack,">
@@ -143,8 +143,8 @@ Signature   : ET WEB_SERVER … (SQL Injection / Local File Inclusion)
 | Question | Réponse |
 | --- | --- |
 | **Que s'est-il passé ?** | Une même IP a envoyé à DVWA des requêtes contenant des motifs d'injection SQL (`UNION`, `'`, `OR 1=1`), de traversée de répertoire (`../`, `/etc/passwd`) et des user-agents d'outils (`sqlmap`, `Nikto`). |
-| **Pourquoi est-ce une alerte ?** | Deux capteurs indépendants concordent : Suricata reconnaît la signature dans le paquet, la règle ELK relit l'URL décodée par nginx. Une requête isolée peut être une erreur ; ici, le volume (**8 207** requêtes en 10 min, 207 alertes) et le user-agent excluent l'accident. |
-| **Quelle gravité ?** | Élevée si l'attaque réussit : vol de la base (comptes, mots de passe), lecture de fichiers système, puis exécution de code. Les codes retour (`200` sur un `UNION`, `500` sur `ORDER BY`) montrent que l'application **répond** à l'injection : elle est vulnérable. |
+| **Pourquoi est-ce une alerte ?** | Deux capteurs indépendants concordent : Suricata reconnaît la signature dans le paquet, la règle ELK relit l'URL décodée par nginx. Une requête isolée peut être une erreur ; ici, le volume (8 207 requêtes en 10 min, 207 alertes) et le user-agent excluent l'accident. |
+| **Quelle gravité ?** | Élevée si l'attaque réussit : vol de la base (comptes, mots de passe), lecture de fichiers système, puis exécution de code. Les codes retour (`200` sur un `UNION`, `500` sur `ORDER BY`) montrent que l'application répond à l'injection : elle est vulnérable. |
 | **Alerte confirmée ou faux positif ?** | Un scanner de vulnérabilités autorisé (audit interne) produit les mêmes alertes : comparer l'IP à la liste des scanners connus. Sinon, intrusion confirmée. |
 | **Et après ?** | Une SQLi réussie peut mener à un webshell (scénario 4) : chercher des fichiers `.php` récents dans `/var/www`. |
 

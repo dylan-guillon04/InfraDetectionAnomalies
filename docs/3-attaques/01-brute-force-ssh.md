@@ -1,8 +1,8 @@
-# Attaque 1 — Brute-force SSH
+# Attaque 1 : Brute-force SSH
 
 > Mode opératoire du scénario 1. Contexte et justification : [scénarios](00-scenarios.md#scénario-1--brute-force-ssh-). Prérequis : lab démarré (`lab/lab.sh up`).
 
-- **But** : deviner un mot de passe SSH par essais répétés (MITRE T1110.001), et le détecter côté **Wazuh** (règles 5763 / 2502) et **ELK** (règle « Lab - Brute-force SSH »).
+- **But** : deviner un mot de passe SSH par essais répétés (MITRE T1110.001), et le détecter côté Wazuh (règles 5763 / 2502) et ELK (règle « Lab - Brute-force SSH »).
 - **Cible** : `10.10.10.10`, compte `victime`.
 
 ## 1. Attaque (sur Kali)
@@ -17,14 +17,14 @@ hydra -l victime -P /tmp/lab-passwords.txt -t 4 -I ssh://10.10.10.10
 
 ## 2. Vérifications
 
-**Victime** — échecs journalisés puis collectés par syslog-ng :
+**Victime**, échecs journalisés puis collectés par syslog-ng :
 
 ```bash
 sudo grep "Failed password" /var/log/auth.log | tail
 sudo grep "Failed password" /var/log/security-collected.log | tail   # chaîne Wazuh
 ```
 
-**Hôte** — ingestion dans Elasticsearch :
+**Hôte**, ingestion dans Elasticsearch :
 
 ```bash
 cd ~/cours/secu-info/projet-ids/elk
@@ -33,11 +33,11 @@ curl -s --cacert ca.crt -u "$AUTH" \
   "https://localhost:9200/logs-system.auth-default/_count?q=event.outcome:failure%20AND%20source.ip:10.10.10.30%20AND%20@timestamp:%3Enow-10m"
 ```
 
-**Wazuh** (`wazuh.grdr.fr` → Threat Hunting, `agent.name: victime`) : règles **5763** et **2502** (niveau 10), `data.srcip: 10.10.10.30`.
+**Wazuh** (`wazuh.grdr.fr` → Threat Hunting, `agent.name: victime`) : règles 5763 et 2502 (niveau 10), `data.srcip: 10.10.10.30`.
 
 **Kibana** (`localhost:5601`) :
 - *Discover* : `event.dataset:"system.auth" and event.outcome:"failure" and source.ip:"10.10.10.30"`
-- *Security → Alerts* : alerte **« Lab - Brute-force SSH »** (règle de seuil, 10 échecs/min par IP+compte ; laisser 1–2 min).
+- *Security → Alerts* : alerte « Lab - Brute-force SSH » (règle de seuil, 10 échecs/min par IP+compte ; laisser 1–2 min).
 
 ## 3. Résultat obtenu
 
@@ -49,22 +49,22 @@ hydra affiche `all children were disabled` : c'est la pénalité OpenSSH 9.8 qui
 
 ![Dashboard Wazuh de l'agent victime : 182 échecs d'authentification](img/01-brute-force-ssh/wazuh-threat-hunting.png)
 
-**Wazuh** : l'agent `victime` remonte **182 échecs d'authentification** (groupes `authentication_failed`, `sshd`, `pam`).
+**Wazuh** : l'agent `victime` remonte 182 échecs d'authentification (groupes `authentication_failed`, `sshd`, `pam`).
 
 ![Page Alerts de Kibana : alertes SSH, host victime à 99 %](img/01-brute-force-ssh/elastic-alerts.png)
 
-**Elastic** : alertes concentrées à **99 % sur `victime`** ; l'alerte de seuil « Lab - Brute-force SSH » se déclenche sur les échecs ingérés.
+**Elastic** : alertes concentrées à 99 % sur `victime` ; l'alerte de seuil « Lab - Brute-force SSH » se déclenche sur les échecs ingérés.
 
 ![Exemple de mail envoyé](../2-wazuh/img/wazuh-mail-sended.png)
 
 ## 4. OpenSSH 9.8 et la pénalité anti-brute-force
 
-Debian 13 active par défaut les `PerSourcePenalties` d'OpenSSH 9.8 : après quelques échecs, sshd pénalise l'IP source et **rejette ses connexions suivantes** (`drop connection … penalty` dans `auth.log`), d'où le `all children were disabled` de hydra. Ces connexions rejetées ne produisent pas de `Failed password` et ne comptent pas pour la détection. **C'est un point à mentionner dans le rapport** : l'hôte freine nativement le brute-force.
+Debian 13 active par défaut les `PerSourcePenalties` d'OpenSSH 9.8 : après quelques échecs, sshd pénalise l'IP source et rejette ses connexions suivantes (`drop connection … penalty` dans `auth.log`), d'où le `all children were disabled` de hydra. Ces connexions rejetées ne produisent pas de `Failed password` et ne comptent pas pour la détection. C'est un point à mentionner dans le rapport : l'hôte freine nativement le brute-force.
 
 | Option | Commande | Pour / contre |
 | --- | --- | --- |
-| **A — garder la pénalité** (défaut) | `hydra … -t 1 -W 1 …` (un essai à la fois) | réaliste ; détection plus lente à atteindre le seuil |
-| **B — désactiver** | `PerSourcePenalties no` dans `sshd_config` + `systemctl restart ssh` | démo nette ; modifie la posture de la victime |
+| **A, garder la pénalité** (défaut) | `hydra … -t 1 -W 1 …` (un essai à la fois) | réaliste ; détection plus lente à atteindre le seuil |
+| **B, désactiver** | `PerSourcePenalties no` dans `sshd_config` + `systemctl restart ssh` | démo nette ; modifie la posture de la victime |
 
 La détection fonctionne même en option A (test : 53 échecs ingérés, alerte ELK déclenchée). Pour rendre l'option B permanente, l'intégrer à l'image ([modifier l'image](../0-lancer-le-lab.md#modifier-limage-de-la-victime)).
 
@@ -72,17 +72,17 @@ La détection fonctionne même en option A (test : 53 échecs ingérés, alerte 
 
 ## 5. Réponse de l'administrateur
 
-Cette section couvre la chaîne complète : **alerte → notification → explication → réponse**.
+Cette section couvre la chaîne complète : alerte → notification → explication → réponse.
 
 ### 5.1 Alertes et notifications déclenchées
 
 | Plateforme | Règle | Niveau | Notifiée (Slack/courriel ≥ 10) |
 | --- | --- | --- | --- |
-| Wazuh | **5763** — brute force SSH | 10 | ✅ oui |
-| Wazuh | **2502** — échecs répétés (via syslog-ng) | 10 | ✅ oui |
+| Wazuh | **5763**, brute force SSH | 10 | ✅ oui |
+| Wazuh | **2502**, échecs répétés (via syslog-ng) | 10 | ✅ oui |
 | ELK | « Lab - Brute-force SSH » (≥ 10 échecs / IP + compte) | haute | ❌ visible dans *Security → Alerts* uniquement (connecteurs payants, voir [détection ELK](../1-elk/03-detection.md#notifications--limite-de-la-licence-gratuite)) |
 
-Les deux règles Wazuh sont de niveau 10 : elles franchissent le seuil de l'intégration Slack et du courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) sans réglage supplémentaire. L'administrateur est donc prévenu **en dehors du dashboard**, sans avoir à le surveiller.
+Les deux règles Wazuh sont de niveau 10 : elles franchissent le seuil de l'intégration Slack et du courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) sans réglage supplémentaire. L'administrateur est donc prévenu en dehors du dashboard, sans avoir à le surveiller.
 
 ### 5.2 Ce que reçoit l'administrateur
 
@@ -102,8 +102,8 @@ Occurrences : 8 échecs en moins de 2 min
 | Question | Réponse |
 | --- | --- |
 | **Que s'est-il passé ?** | Une même IP (`10.10.10.30`) a enchaîné des échecs d'authentification SSH sur le compte `victime`, à un rythme impossible pour un humain. |
-| **Pourquoi est-ce une alerte ?** | Un utilisateur légitime se trompe 2 ou 3 fois ; dix échecs par minute sur un même compte révèlent un outil automatisé (hydra). Le regroupement par IP **et** compte distingue une attaque ciblée d'un balayage de comptes. |
-| **Quelle gravité ?** | Haute **si** une connexion a réussi : l'attaquant a alors un shell. Sans succès, c'est une tentative, pas encore une compromission. |
+| **Pourquoi est-ce une alerte ?** | Un utilisateur légitime se trompe 2 ou 3 fois ; dix échecs par minute sur un même compte révèlent un outil automatisé (hydra). Le regroupement par IP et compte distingue une attaque ciblée d'un balayage de comptes. |
+| **Quelle gravité ?** | Haute si une connexion a réussi : l'attaquant a alors un shell. Sans succès, c'est une tentative, pas encore une compromission. |
 | **Alerte confirmée ou faux positif ?** | Source interne connue (poste d'un collègue, script de sauvegarde mal configuré) → faux positif probable. IP inconnue, échecs sur plusieurs comptes, ou rythme régulier → intrusion à traiter. |
 | **Et après ?** | Le brute-force est un accès initial : il prépare les scénarios 4 et 5 (persistance, malware) s'il aboutit. |
 
@@ -118,7 +118,7 @@ sudo grep "Failed password" /var/log/auth.log | awk '{print $9, $11}' | sort | u
 last -i | head                                                         # sessions récentes
 ```
 
-Si un `Accepted password` apparaît pour `10.10.10.30` : traiter comme une **compromission** (changer le mot de passe, fermer les sessions, enchaîner avec les [attaques 4](04-modification-fichiers.md) et [5](05-malware-privileges.md) : recherche de persistance).
+Si un `Accepted password` apparaît pour `10.10.10.30` : traiter comme une compromission (changer le mot de passe, fermer les sessions, enchaîner avec les [attaques 4](04-modification-fichiers.md) et [5](05-malware-privileges.md) : recherche de persistance).
 
 **2. Contenir : bloquer la source.**
 
@@ -126,7 +126,7 @@ Si un `Accepted password` apparaît pour `10.10.10.30` : traiter comme une **com
 sudo ufw deny from 10.10.10.30 to any port 22      # ou : sudo iptables -I INPUT -s 10.10.10.30 -p tcp --dport 22 -j DROP
 ```
 
-Alternative automatique : la **réponse active** de Wazuh (module `firewall-drop`) bloque l'IP à la détection de la règle 5763 ; à n'activer qu'après avoir listé les IP à ne jamais bloquer (administrateurs, supervision).
+Alternative automatique : la réponse active de Wazuh (module `firewall-drop`) bloque l'IP à la détection de la règle 5763 ; à n'activer qu'après avoir listé les IP à ne jamais bloquer (administrateurs, supervision).
 
 **3. Durcir : imposer l'authentification par clé.**
 
@@ -141,7 +141,7 @@ MaxAuthTries 3
 sudo sshd -t && sudo systemctl reload ssh   # tester la config avant de recharger, garder une session ouverte
 ```
 
-> Prérequis : avoir déposé sa clé publique (`ssh-copy-id`) **avant** de désactiver les mots de passe, sous peine de s'enfermer dehors.
+> Prérequis : avoir déposé sa clé publique (`ssh-copy-id`) avant de désactiver les mots de passe, sous peine de s'enfermer dehors.
 
 **4. Tracer : documenter l'incident** (IP, horodatage, compte visé, règle, décision) et vérifier que l'alerte est bien passée en *Closed* dans Kibana / traitée dans Wazuh.
 

@@ -1,8 +1,8 @@
-# Bilan — ELK vs Wazuh, limites et perspectives
+# Bilan : ELK vs Wazuh, limites et perspectives
 
 ## Pourquoi on a basculé sur Wazuh
 
-La chaîne ELK fonctionne (voir [partie 1](1-elk/03-detection.md#ce-que-la-partie-1-démontre)). Mais chaque étape a demandé un travail d'adaptation que Wazuh fournit d'origine. Le tableau ci-dessous ne s'appuie pas sur des fiches produit : il résume ce que nous avons **réellement fait** de chaque côté.
+La chaîne ELK fonctionne (voir [partie 1](1-elk/03-detection.md#ce-que-la-partie-1-démontre)). Mais chaque étape a demandé un travail d'adaptation que Wazuh fournit d'origine. Le tableau ci-dessous ne s'appuie pas sur des fiches produit : il résume ce que nous avons réellement fait de chaque côté.
 
 | Besoin | Avec ELK + Elastic Security (vécu) | Avec Wazuh (vécu) |
 | --- | --- | --- |

@@ -1,11 +1,11 @@
-# Partie 1.1 — Installation d'Elasticsearch et Kibana
+# Partie 1.1 : Installation d'Elasticsearch et Kibana
 
-> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
+> **Partie 1, ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
 
 
 > **Relancer le lab existant ?** Ce guide décrit l'installation initiale. Pour redémarrer la stack à partir des sauvegardes, utiliser `lab/lab.sh` : voir [lancer le lab](../0-lancer-le-lab.md#restaurer-nest-pas-réinstaller), qui liste les étapes ci-dessous déjà incluses dans la sauvegarde.
 
-Elasticsearch et Kibana sont déployés en Docker sur l'**hôte Ubuntu** qui héberge les machines virtuelles du lab. Le fichier `elk/compose.yaml` est dérivé du compose officiel d'Elastic, ramené à un seul nœud.
+Elasticsearch et Kibana sont déployés en Docker sur l'hôte Ubuntu qui héberge les machines virtuelles du lab. Le fichier `elk/compose.yaml` est dérivé du compose officiel d'Elastic, ramené à un seul nœud.
 
 ## Pourquoi ce placement
 
@@ -18,7 +18,7 @@ Elasticsearch et Kibana sont déployés en Docker sur l'**hôte Ubuntu** qui hé
 ## Sécurité de la stack
 
 - **Authentification et TLS activés** (HTTP et transport). Elastic Security l'exige.
-- Un conteneur éphémère `setup` génère une autorité de certification (CA) et le certificat d'Elasticsearch. Ce certificat est valide pour `es01`, `localhost`, `127.0.0.1` et **`192.168.122.1`**, l'adresse par laquelle la victime joint Elasticsearch.
+- Un conteneur éphémère `setup` génère une autorité de certification (CA) et le certificat d'Elasticsearch. Ce certificat est valide pour `es01`, `localhost`, `127.0.0.1` et `192.168.122.1`, l'adresse par laquelle la victime joint Elasticsearch.
 - **Exposition minimale :**
 
 | Service | Adresse d'écoute | Qui peut y accéder |
@@ -43,7 +43,7 @@ Sur Ubuntu 24.04, `vm.max_map_count` vaut déjà 1 048 576 : aucun réglage n'es
 echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-elastic.conf && sudo sysctl --system
 ```
 
-## Étape 1 — Configuration
+## Étape 1 : Configuration
 
 Depuis le dossier `elk/` :
 
@@ -69,7 +69,7 @@ chmod 600 .env
 
 Les mots de passe doivent être alphanumériques : le script du conteneur `setup` ne gère pas les caractères spéciaux.
 
-## Étape 2 — Démarrage
+## Étape 2 : Démarrage
 
 ```bash
 docker compose up -d
@@ -93,7 +93,7 @@ AUTH="elastic:$(grep ^ELASTIC_PASSWORD= .env | cut -d= -f2)"
 sudo cp certs/ca/ca.crt . && sudo chown $USER: ca.crt
 ```
 
-## Étape 3 — Vérifications
+## Étape 3 : Vérifications
 
 **Depuis l'hôte :**
 
@@ -120,7 +120,7 @@ nc -zv -w3 192.168.122.1 9200
 
 **Kibana :** ouvrir `http://localhost:5601` et se connecter avec `elastic`. Sur l'écran d'accueil, choisir « Explore on my own ».
 
-## Étape 4 — Réglage pour un nœud unique
+## Étape 4 : Réglage pour un nœud unique
 
 Par défaut, chaque index demande une réplique, qui ne peut pas être placée sur un cluster d'un seul nœud. Le cluster resterait alors en état « jaune » en permanence. On fixe donc le nombre de répliques à zéro pour tous les data streams `logs-*` :
 
@@ -130,9 +130,9 @@ curl -s --cacert ca.crt -u $AUTH -X PUT "$ES/_component_template/logs@custom" \
   -d '{"template":{"settings":{"index":{"number_of_replicas":0}}}}'
 ```
 
-## Étape 5 — Installation des intégrations Elastic
+## Étape 5 : Installation des intégrations Elastic
 
-Les intégrations sont installées **sans agent** : on ne récupère que leurs « assets ».
+Les intégrations sont installées sans agent : on ne récupère que leurs « assets ».
 
 - **Pipelines d'ingestion** : ils convertissent une ligne de log brute au format ECS.
 - **Templates d'index** : ils déclarent les types des champs.
@@ -154,7 +154,7 @@ done
 
 Les erreurs `conflict` sur `logs-*` et `metrics-*` dans les logs Kibana sont sans conséquence : ces vues de données existent déjà.
 
-Vérification dans Kibana : **Integrations → Installed integrations**.
+Vérification dans Kibana : Integrations → Installed integrations.
 
 ## Test du parsing ECS
 

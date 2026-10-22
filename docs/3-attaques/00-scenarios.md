@@ -21,13 +21,13 @@ Ils sollicitent volontairement des sources de logs différentes (authentificatio
 
 Les numéros de règles marqués *attendu* sont ceux des règles Wazuh correspondantes ; ils sont à confirmer avec l'identifiant réellement relevé lors du test.
 
-Règle commune : **Kali attaque toujours l'adresse lab de la victime, `10.10.10.10`.**
+Règle commune : Kali attaque toujours l'adresse lab de la victime, `10.10.10.10`.
 
 ---
 
-## Scénario 1 — Brute-force SSH ✅
+## Scénario 1 : Brute-force SSH ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 1 — brute-force SSH](01-brute-force-ssh.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 1, brute-force SSH](01-brute-force-ssh.md).
 
 **Objectif de l'attaquant.** Deviner le mot de passe d'un compte en essayant automatiquement une liste de mots de passe.
 
@@ -45,8 +45,8 @@ hydra -l victime -P /usr/share/wordlists/rockyou.txt -t 4 ssh://10.10.10.10
 
 | Plateforme | Règle | Niveau |
 | --- | --- | --- |
-| Wazuh | **5763** — brute force SSH (échecs d'authentification répétés) | 10 |
-| Wazuh | **2502** — échecs répétés, via le collecteur syslog-ng | 10 |
+| Wazuh | **5763**, brute force SSH (échecs d'authentification répétés) | 10 |
+| Wazuh | **2502**, échecs répétés, via le collecteur syslog-ng | 10 |
 | ELK | « Lab - Brute-force SSH (échecs répétés) » : ≥ 10 échecs par IP et par compte | haute |
 
 Les deux règles Wazuh se déclenchent par deux chemins différents. C'est la preuve que la collecte par syslog-ng fonctionne.
@@ -64,9 +64,9 @@ Les deux règles Wazuh se déclenchent par deux chemins différents. C'est la pr
 
 ---
 
-## Scénario 2 — Attaque web (injection SQL, LFI) ✅
+## Scénario 2 : Attaque web (injection SQL, LFI) ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 2 — attaque web](02-attaque-web.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 2, attaque web](02-attaque-web.md).
 
 **Objectif de l'attaquant.** Exploiter une faille de l'application web pour lire la base de données (injection SQL) ou des fichiers du serveur (inclusion de fichier local).
 
@@ -104,13 +104,13 @@ sqlmap -u "http://10.10.10.10/vulnerabilities/sqli/?id=1&Submit=Submit" --cookie
 
 ---
 
-## Scénario 3 — Scan de ports ✅
+## Scénario 3 : Scan de ports ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 3 — scan de ports](03-scan-de-ports.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 3, scan de ports](03-scan-de-ports.md).
 
 **Objectif de l'attaquant.** Cartographier les services ouverts de la victime avant de choisir une cible.
 
-**Pourquoi ce scénario.** Le scan précède presque toute intrusion. Le détecter permet de repérer l'attaquant **avant** qu'il n'agisse.
+**Pourquoi ce scénario.** Le scan précède presque toute intrusion. Le détecter permet de repérer l'attaquant avant qu'il n'agisse.
 
 **Attaque (Kali) :**
 
@@ -130,7 +130,7 @@ Le seuil (plus de 50 paquets SYN en 5 secondes depuis une même source) dépasse
 
 La signature est déclarée dans `rule-files` de `/etc/suricata/suricata.yaml` (chemin absolu, à côté de `suricata.rules`) et intégrée à l'image de la victime. Test du 21/10/2026 : `nmap -sS -p 1-1000` depuis Kali produit l'alerte dans `eve.json`, dans Elasticsearch, et déclenche les règles « Lab - Alerte Suricata » et « Lab - Scan de ports » d'Elastic Security.
 
-`detection_filter` déclenche une alerte **pour chaque SYN au-delà du 50e** : un scan de 1 000 ports produit environ 950 alertes. Pour n'en garder qu'une par source et par fenêtre, on peut remplacer `detection_filter:…` par `threshold:type both, track by_src, count 50, seconds 5`.
+`detection_filter` déclenche une alerte pour chaque SYN au-delà du 50e : un scan de 1 000 ports produit environ 950 alertes. Pour n'en garder qu'une par source et par fenêtre, on peut remplacer `detection_filter:…` par `threshold:type both, track by_src, count 50, seconds 5`.
 
 **Détection attendue :**
 
@@ -146,9 +146,9 @@ La signature est déclarée dans `rule-files` de `/etc/suricata/suricata.yaml` (
 
 ---
 
-## Scénario 4 — Modification de fichiers sensibles ✅
+## Scénario 4 : Modification de fichiers sensibles ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 4 — modification de fichiers](04-modification-fichiers.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 4, modification de fichiers](04-modification-fichiers.md).
 
 **Objectif de l'attaquant.** Une fois sur la machine, s'y maintenir : créer une porte dérobée (webshell) ou altérer les fichiers de comptes.
 
@@ -180,9 +180,9 @@ Penser à retirer la ligne ajoutée et le fichier après le test.
 
 ---
 
-## Scénario 5 — Malware et élévation de privilèges ✅
+## Scénario 5 : Malware et élévation de privilèges ✅
 
-> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 5 — malware et élévation de privilèges](05-malware-privileges.md).
+> Mode opératoire pas à pas (commandes, vérifications, preuves) : [attaque 5, malware et élévation de privilèges](05-malware-privileges.md).
 
 **Objectif de l'attaquant.** Déposer un outil malveillant, puis se créer un compte privilégié.
 

@@ -1,6 +1,6 @@
-# Partie 2 — Déploiement et intégration de Wazuh
+# Partie 2 : Déploiement et intégration de Wazuh
 
-> **Partie 2 — Wazuh.** Après avoir monté la chaîne ELK ([partie 1](../1-elk/01-installation.md)), on mène les scénarios d'intrusion sous Wazuh, beaucoup plus direct pour un lab de cette taille. Le [bilan](../4-bilan-elk-vs-wazuh.md) détaille pourquoi.
+> **Partie 2, Wazuh.** Après avoir monté la chaîne ELK ([partie 1](../1-elk/01-installation.md)), on mène les scénarios d'intrusion sous Wazuh, beaucoup plus direct pour un lab de cette taille. Le [bilan](../4-bilan-elk-vs-wazuh.md) détaille pourquoi.
 
 Wazuh est une plateforme de sécurité open source qui assure plusieurs fonctions :
 
@@ -32,20 +32,20 @@ flowchart LR
     A -->|"sec.grdr.fr<br/>1514-1515/TCP"| M["VPS : Wazuh<br/>manager + indexer + dashboard"]
 ```
 
-Le serveur Wazuh tourne sur un **VPS OVH**, déjà utilisé pour d'autres projets. Il est donc séparé du lab, comme le serait un SOC réel.
+Le serveur Wazuh tourne sur un VPS OVH, déjà utilisé pour d'autres projets. Il est donc séparé du lab, comme le serait un SOC réel.
 
 - **L'agent de la victime** joint le manager par le nom `sec.grdr.fr`, sur les ports 1514 (événements) et 1515 (enrôlement), ouverts sur le pare-feu réseau d'OVH.
 - **Le dashboard** est publié sur `wazuh.grdr.fr` par un tunnel Cloudflare, derrière une authentification Cloudflare Access. Il n'est jamais exposé directement sur Internet.
 
 > **Pour reproduire cette partie**, remplacez `sec.grdr.fr` (manager) et `wazuh.grdr.fr` (dashboard)
-> par **votre propre instance Wazuh** : une VM, un VPS, ou même un déploiement local sur l'hôte.
+> par votre propre instance Wazuh : une VM, un VPS, ou même un déploiement local sur l'hôte.
 > Seule l'adresse du manager, passée à l'agent via `WAZUH_MANAGER` lors de l'enrôlement, doit
 > correspondre à la vôtre ; le reste du guide est identique. Le tunnel Cloudflare n'est qu'un
 > confort d'accès au dashboard, pas une nécessité.
 
 ## Côté serveur (VPS)
 
-Déploiement **single-node** en Docker Compose, à partir du dépôt officiel `wazuh-docker`, version **4.14.8**.
+Déploiement single-node en Docker Compose, à partir du dépôt officiel `wazuh-docker`, version 4.14.8.
 
 ```bash
 git clone https://github.com/wazuh/wazuh-docker.git -b v4.14.8
@@ -85,7 +85,7 @@ WAZUH_MANAGER="sec.grdr.fr" WAZUH_AGENT_NAME="victime" apt install -y wazuh-agen
 systemctl enable --now wazuh-agent
 ```
 
-L'agent apparaît dans le dashboard sous le nom **`victime`** (ID `004`), à l'état *Active*.
+L'agent apparaît dans le dashboard sous le nom `victime` (ID `004`), à l'état *Active*.
 
 ### Sources de logs lues par l'agent
 
@@ -126,7 +126,7 @@ systemctl restart wazuh-agent
 
 ## Notifications
 
-Le sujet demande une notification dès qu'une intrusion est confirmée. Wazuh le gère nativement, sans licence, dans le fichier `ossec.conf` **du manager**. Dans le déploiement Docker, ce fichier s'édite dans le conteneur :
+Le sujet demande une notification dès qu'une intrusion est confirmée. Wazuh le gère nativement, sans licence, dans le fichier `ossec.conf` du manager. Dans le déploiement Docker, ce fichier s'édite dans le conteneur :
 
 ```bash
 sudo docker exec -it single-node-wazuh.manager-1 bash
@@ -201,7 +201,7 @@ docker logs --tail 20 <conteneur postfix> 2>&1 | grep -E "status=|DKIM"
 
 Résultat attendu : `DKIM-Signature field added (s=wazuh, d=grdr.fr)` puis `status=sent`.
 
-**3. Configuration du manager**, depuis le dashboard : **Server management → Settings → Edit configuration**.
+**3. Configuration du manager**, depuis le dashboard : Server management → Settings → Edit configuration.
 
 ![Menu Server management → Settings](img/wazuh-mail-menu.png)
 
@@ -223,7 +223,7 @@ sont remplacées par :
 
 ![Bloc global après modification](img/wazuh-mail-global.png)
 
-Le seuil d'envoi passe de 12 à **10**, comme pour Slack, dans le bloc `<alerts>` :
+Le seuil d'envoi passe de 12 à 10, comme pour Slack, dans le bloc `<alerts>` :
 
 ```xml
 <email_alert_level>10</email_alert_level>
@@ -252,7 +252,7 @@ Scénario 5 : analyse automatique de chaque fichier signalé par le module d'int
 
 - **Dashboard → Agents** : `victime` est *Active*.
 - **Threat Hunting**, filtre `agent.name: victime` : les événements remontent.
-- **Configuration Assessment** : le scan CIS Debian 13 s'exécute automatiquement. Score obtenu : **42 %**, ce qui illustre la valeur ajoutée de Wazuh sans aucune configuration.
+- **Configuration Assessment** : le scan CIS Debian 13 s'exécute automatiquement. Score obtenu : 42 %, ce qui illustre la valeur ajoutée de Wazuh sans aucune configuration.
 
 ![Dashboard Wazuh → Agents : l'agent « victime » à l'état Active](img/wazuh-active-agent.png)
 
@@ -260,4 +260,4 @@ L'agent `victime` est enrôlé et *Active* dans le dashboard.
 
 ![Configuration Assessment de Wazuh : score CIS de 42 % sur la victime Debian 13](img/wazuh-score-cis.png)
 
-Le scan CIS Debian 13 tourne automatiquement : **42 %** de conformité, sans aucune configuration — la valeur ajoutée immédiate de Wazuh.
+Le scan CIS Debian 13 tourne automatiquement : 42 % de conformité, sans aucune configuration, la valeur ajoutée immédiate de Wazuh.

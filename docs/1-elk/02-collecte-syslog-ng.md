@@ -1,6 +1,6 @@
-# Partie 1.2 — Collecte des logs avec syslog-ng
+# Partie 1.2 : Collecte des logs avec syslog-ng
 
-> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
+> **Partie 1, ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
 
 
 syslog-ng est le collecteur imposé par le sujet. Sur la victime, il lit les fichiers de logs de sécurité et les envoie à Elasticsearch. La configuration est dans [`syslog-ng/elastic.conf`](../../syslog-ng/elastic.conf).
@@ -28,7 +28,7 @@ flowchart LR
     P --> D["Document ECS<br/>source.ip, user.name,<br/>event.outcome…"]
 ```
 
-syslog-ng n'analyse pas le contenu des logs (`flags(no-parse)`). Il envoie chaque ligne intacte dans le data stream de l'intégration Elastic correspondante. Le pipeline d'ingestion de l'intégration la découpe ensuite en champs **ECS** (Elastic Common Schema).
+syslog-ng n'analyse pas le contenu des logs (`flags(no-parse)`). Il envoie chaque ligne intacte dans le data stream de l'intégration Elastic correspondante. Le pipeline d'ingestion de l'intégration la découpe ensuite en champs ECS (Elastic Common Schema).
 
 Pourquoi ce choix plutôt qu'un parsing dans syslog-ng :
 
@@ -52,7 +52,7 @@ Un agent Elastic ajouterait ces champs automatiquement. syslog-ng doit les fourn
 
 ## Compte dédié dans Elasticsearch
 
-syslog-ng ne se connecte pas avec le super-utilisateur `elastic`, mais avec un compte qui ne peut **qu'écrire** dans les data streams `logs-*`. Il ne peut rien lire, rien supprimer, et n'a accès à aucun autre index (principe du moindre privilège).
+syslog-ng ne se connecte pas avec le super-utilisateur `elastic`, mais avec un compte qui ne peut qu'écrire dans les data streams `logs-*`. Il ne peut rien lire, rien supprimer, et n'a accès à aucun autre index (principe du moindre privilège).
 
 Sur l'hôte, depuis `elk/` (avec `ES` et `AUTH` définis comme dans [docs/01](01-installation.md)) :
 
@@ -85,7 +85,7 @@ syslog-ng --syntax-only && systemctl restart syslog-ng
 systemctl status syslog-ng --no-pager | head -5
 ```
 
-`elastic.conf` **s'ajoute** à la configuration existante (`security.conf`) sans la modifier. Le fichier `security-collected.log`, lu par l'agent Wazuh, continue d'être alimenté : les deux chaînes de collecte fonctionnent en parallèle.
+`elastic.conf` s'ajoute à la configuration existante (`security.conf`) sans la modifier. Le fichier `security-collected.log`, lu par l'agent Wazuh, continue d'être alimenté : les deux chaînes de collecte fonctionnent en parallèle.
 
 ## Lecture de la configuration
 
@@ -154,11 +154,11 @@ for ds in system.auth nginx.access nginx.error suricata.eve; do
 done
 ```
 
-Résultat obtenu : **0 erreur de parsing sur les quatre sources**.
+Résultat obtenu : 0 erreur de parsing sur les quatre sources.
 
 ### Dans Kibana
 
-Dans **Discover**, avec la vue de données « Tous les logs » :
+Dans Discover, avec la vue de données « Tous les logs » :
 
 ```
 event.dataset:"system.auth" and event.outcome:"failure" and source.ip:"10.10.10.30"
@@ -168,4 +168,4 @@ Filtrer sur `event.dataset` et non sur `data_stream.dataset` : ce second champ n
 
 ![Document system.auth déplié dans Discover : champs ECS source.ip, user.name, event.outcome extraits par le pipeline](img/discover-auth-ecs.png)
 
-Un document `system.auth` déplié : la ligne brute d'`auth.log` est devenue des champs **ECS** (`source.ip`, `user.name`, `process.name`, `event.outcome`), exploitables par les règles de détection.
+Un document `system.auth` déplié : la ligne brute d'`auth.log` est devenue des champs ECS (`source.ip`, `user.name`, `process.name`, `event.outcome`), exploitables par les règles de détection.

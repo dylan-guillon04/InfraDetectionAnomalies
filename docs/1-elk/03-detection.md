@@ -1,6 +1,6 @@
-# Partie 1.3 — Détection avec Elastic Security
+# Partie 1.3 : Détection avec Elastic Security
 
-> **Partie 1 — ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
+> **Partie 1, ELK.** Cette partie déploie la chaîne exigée par le sujet (syslog-ng → Elasticsearch → Kibana) et la rend fonctionnelle de bout en bout. Les scénarios d'intrusion sont ensuite menés sous Wazuh ([partie 2](../2-wazuh/01-deploiement.md)) ; le [bilan](../4-bilan-elk-vs-wazuh.md) explique ce choix.
 
 
 ## Qui détecte quoi
@@ -13,11 +13,11 @@ Elasticsearch stocke et Kibana affiche, mais aucun des deux ne détecte quoi que
 | **Moteur de détection d'Elastic Security** | Règles de corrélation exécutées sur les données stockées | Tous les logs : seuils, séquences, combinaisons de champs |
 | **Wazuh** (outil complémentaire) | HIDS | Intégrité des fichiers, conformité CIS, corrélation côté hôte |
 
-Les règles d'Elastic Security tournent à intervalle régulier (toutes les minutes pour nos règles). Chaque correspondance crée une **alerte**, consultable dans Kibana.
+Les règles d'Elastic Security tournent à intervalle régulier (toutes les minutes pour nos règles). Chaque correspondance crée une alerte, consultable dans Kibana.
 
 ## Règles fournies par Elastic
 
-Installation : **Security → Rules → Detection rules → Add Elastic rules → Install all** (2 059 règles).
+Installation : Security → Rules → Detection rules → Add Elastic rules → Install all (2 059 règles).
 
 Toutes les règles sont installées désactivées. On n'active que celles qui portent sur des données réellement collectées. Les autres attendent des sources absentes du lab (Windows, Elastic Defend, cloud) : elles tourneraient pour rien ou échoueraient.
 
@@ -54,12 +54,12 @@ Le mot de passe `elastic` est lu dans `elk/.env`, jamais écrit dans le script.
 
 ### Lien vers la documentation (champ *References*)
 
-Chaque règle `lab-*` porte une **URL de référence** (*About → Reference URLs*) vers la fiche
+Chaque règle `lab-*` porte une URL de référence (*About → Reference URLs*) vers la fiche
 d'attaque correspondante de ce dépôt. Depuis une alerte, un analyste atteint ainsi en un clic le
 mode opératoire de l'attaque et la réponse attendue de l'administrateur.
 
-Le champ **Description** d'une règle est du texte brut : il n'interprète pas le Markdown, donc un
-`[lien](url)` y resterait affiché littéralement. C'est le champ **References**, prévu pour cela,
+Le champ Description d'une règle est du texte brut : il n'interprète pas le Markdown, donc un
+`[lien](url)` y resterait affiché littéralement. C'est le champ References, prévu pour cela,
 qui rend l'URL cliquable.
 
 | Règle | Fiche liée |
@@ -74,7 +74,7 @@ qui rend l'URL cliquable.
 
 ### Promotion des alertes Suricata
 
-Quand Suricata détecte une attaque, il écrit une alerte dans `eve.json`, et syslog-ng la transmet à Elasticsearch. Mais ce n'est encore qu'un document parmi d'autres : la page **Alertes** d'Elastic Security n'affiche que les alertes produites par ses propres règles.
+Quand Suricata détecte une attaque, il écrit une alerte dans `eve.json`, et syslog-ng la transmet à Elasticsearch. Mais ce n'est encore qu'un document parmi d'autres : la page Alertes d'Elastic Security n'affiche que les alertes produites par ses propres règles.
 
 Cette règle « promeut » chaque alerte Suricata en alerte Elastic Security :
 
@@ -91,7 +91,7 @@ event.category:"authentication" and event.action:"ssh_login" and event.outcome:"
 seuil : ≥ 10 événements par couple (source.ip, user.name), fenêtre de 2 minutes
 ```
 
-**Justification du seuil.** Un utilisateur légitime qui se trompe de mot de passe échoue 2 ou 3 fois. Dix échecs en une minute sur un même compte depuis une même IP n'ont rien d'humain, c'est un outil automatisé. On regroupe par **IP + compte** pour distinguer une attaque ciblée d'un balayage de comptes.
+**Justification du seuil.** Un utilisateur légitime qui se trompe de mot de passe échoue 2 ou 3 fois. Dix échecs en une minute sur un même compte depuis une même IP n'ont rien d'humain, c'est un outil automatisé. On regroupe par IP + compte pour distinguer une attaque ciblée d'un balayage de comptes.
 
 ### Scan de ports (scénario 3)
 
@@ -100,7 +100,7 @@ event.dataset:"suricata.eve" and network.transport:"tcp" and destination.ip:"10.
 seuil : par source.ip, cardinalité de destination.port > 50, fenêtre de 6 minutes
 ```
 
-**Pourquoi des flux et non une signature.** Le jeu de règles ET Open ne détecte pas les scans de ports par défaut. Plutôt que de dépendre d'une signature, on exploite les **flux** que Suricata enregistre pour chaque connexion : si une même IP touche plus de 50 ports distincts, c'est un scan. Un client normal n'en contacte que quelques-uns (22, 80, 443).
+**Pourquoi des flux et non une signature.** Le jeu de règles ET Open ne détecte pas les scans de ports par défaut. Plutôt que de dépendre d'une signature, on exploite les flux que Suricata enregistre pour chaque connexion : si une même IP touche plus de 50 ports distincts, c'est un scan. Un client normal n'en contacte que quelques-uns (22, 80, 443).
 
 C'est l'illustration de la corrélation : aucun flux pris isolément n'est suspect, c'est leur agrégation qui l'est.
 
@@ -129,8 +129,8 @@ Cette détection est complémentaire de Suricata. Suricata analyse les paquets �
 | Où | Usage |
 | --- | --- |
 | **Security → Détections → Alertes** | Vue principale : toutes les alertes, histogramme, filtres par sévérité ou par règle |
-| Détail d'une alerte → **Investiguer dans la chronologie** | Tous les événements liés : la vue d'analyse de l'intrusion |
-| **Security → Règles** → une règle → **Résultats d'exécution** | Prouve qu'une règle a tourné, même sans alerte |
+| Détail d'une alerte → Investiguer dans la chronologie | Tous les événements liés : la vue d'analyse de l'intrusion |
+| **Security → Règles** → une règle → Résultats d'exécution | Prouve qu'une règle a tourné, même sans alerte |
 | Discover sur l'index `.alerts-security.alerts-default` | Requêtes libres sur les alertes ; base du dashboard personnalisé |
 
 ![Page Alerts d'Elastic Security : les alertes des cinq scénarios, avec histogramme et filtres](img/alerts-main-view.png)
@@ -147,14 +147,14 @@ Les quatre règles `lab-*` s'exécutent sans erreur (état « Succeeded »), pre
 
 ## Notifications : limite de la licence gratuite
 
-Le sujet demande une notification (courriel ou SMS) dès qu'une intrusion est confirmée. Avec la licence **Basic** (gratuite), les actions des règles se limitent à écrire dans un index ou dans le journal de Kibana. Les connecteurs courriel, Slack, Teams et webhook sont réservés aux licences payantes.
+Le sujet demande une notification (courriel ou SMS) dès qu'une intrusion est confirmée. Avec la licence Basic (gratuite), les actions des règles se limitent à écrire dans un index ou dans le journal de Kibana. Les connecteurs courriel, Slack, Teams et webhook sont réservés aux licences payantes.
 
 Les contournements possibles :
 
-- la **licence d'essai de 30 jours**, qui débloque les connecteurs, mais seulement le temps de l'essai ;
-- un **script externe** qui interroge `.alerts-security.alerts-default` et relaie les nouvelles alertes.
+- la licence d'essai de 30 jours, qui débloque les connecteurs, mais seulement le temps de l'essai ;
+- un script externe qui interroge `.alerts-security.alerts-default` et relaie les nouvelles alertes.
 
-Wazuh, lui, envoie les alertes par courriel et vers Slack **nativement et gratuitement**. C'est l'un des arguments de la bascule (voir le [bilan](../4-bilan-elk-vs-wazuh.md)) : les notifications sont traitées dans la [partie 2](../2-wazuh/01-deploiement.md#notifications).
+Wazuh, lui, envoie les alertes par courriel et vers Slack nativement et gratuitement. C'est l'un des arguments de la bascule (voir le [bilan](../4-bilan-elk-vs-wazuh.md)) : les notifications sont traitées dans la [partie 2](../2-wazuh/01-deploiement.md#notifications).
 
 ## Pourquoi pas Elastic Defend
 
@@ -169,7 +169,7 @@ En production, Elastic Agent + Defend remplacerait avantageusement syslog-ng : c
 
 ## Ce que la partie 1 démontre
 
-- La chaîne du sujet, **syslog-ng → Elasticsearch → Kibana**, fonctionne de bout en bout, avec TLS et un compte à privilèges minimaux.
-- Les logs sont convertis au format **ECS**, avec 0 erreur de parsing sur les quatre sources.
+- La chaîne du sujet, syslog-ng → Elasticsearch → Kibana, fonctionne de bout en bout, avec TLS et un compte à privilèges minimaux.
+- Les logs sont convertis au format ECS, avec 0 erreur de parsing sur les quatre sources.
 - **Le scénario 1 (brute-force SSH) est détecté** par une règle Elastic Security et visible dans la page Alertes.
 - Le coût est élevé : il a fallu compléter chaque document à la main (`input.type`, `event.timezone`, `host.*`), réécrire des règles et contourner la licence pour les notifications. C'est ce constat qui motive la [partie 2](../2-wazuh/01-deploiement.md).
