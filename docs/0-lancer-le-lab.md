@@ -141,7 +141,7 @@ Le script ne rejoue aucun guide : il restaure un lab déjà construit. Tout ce q
 | [2.1](2-wazuh/01-deploiement.md) | Serveur Wazuh | VPS OVH | hors script, déjà en ligne |
 | [2.1](2-wazuh/01-deploiement.md) | Agent Wazuh enrôlé, lecture de `security-collected.log` et `eve.json` | disque de la victime | ✅ inclus |
 | [2.1](2-wazuh/01-deploiement.md) | FIM temps réel (`/etc/passwd`, `/var/www/dvwa`…) | disque de la victime | ✅ inclus |
-| [2.1](2-wazuh/01-deploiement.md) | Notifications Slack / courriel, VirusTotal | manager Wazuh (VPS) | ⬜ à configurer (scénario 5) |
+| [2.1](2-wazuh/01-deploiement.md) | Notifications Discord / courriel, VirusTotal | manager Wazuh (VPS) | ⬜ à configurer (scénario 5) |
 | [2.2](3-attaques/00-scenarios.md) | Les attaques des cinq scénarios | — | à lancer à la main depuis Kali |
 
 Les cibles des attaques (nginx, DVWA, MariaDB, SSH) et Suricata, qui écoute sur `enp7s0`, sont dans le disque de la victime.

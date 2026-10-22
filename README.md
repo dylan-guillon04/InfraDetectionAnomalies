@@ -23,14 +23,14 @@ Projet de sécurité des réseaux. Dans un laboratoire virtualisé, une machine 
 On a monté la chaîne demandée par le sujet : syslog-ng → Elasticsearch → Kibana, avec Suricata comme IDS réseau et le moteur de détection d'Elastic Security. Les logs arrivent au format standard ECS, et le brute-force SSH est détecté dans Kibana.
 
 **Partie 2, Wazuh : on a basculé, parce que c'est beaucoup plus simple.**
-Pour obtenir ce résultat avec ELK, il a fallu compléter chaque log à la main, réécrire des règles pensées pour un autre collecteur, et contourner la licence pour envoyer une simple notification. Wazuh fait tout cela nativement : décodage des logs, règles de détection, intégrité des fichiers, conformité, alertes par courriel et Slack. Les cinq scénarios sont donc menés sous Wazuh. syslog-ng et Suricata restent en place et alimentent les deux plateformes.
+Pour obtenir ce résultat avec ELK, il a fallu compléter chaque log à la main, réécrire des règles pensées pour un autre collecteur, et contourner la licence pour envoyer une simple notification. Wazuh fait tout cela nativement : décodage des logs, règles de détection, intégrité des fichiers, conformité, alertes par courriel et Discord. Les cinq scénarios sont donc menés sous Wazuh. syslog-ng et Suricata restent en place et alimentent les deux plateformes.
 
 | Ce qu'il a fallu pour… | ELK + Elastic Security | Wazuh |
 | --- | --- | --- |
 | Comprendre les logs | Installer les intégrations, puis ajouter à la main `input.type`, le fuseau horaire et les champs `host.*` | Décodeurs intégrés, rien à ajouter |
 | Détecter un brute-force SSH | Écrire une règle custom : les règles Elastic supposent un agent Elastic | Règle native déclenchée sans réglage (5763) |
 | Surveiller l'intégrité des fichiers | auditd + intégration, ou Elastic Defend (agent dédié + Fleet Server) | Module natif (syscheck) |
-| Être notifié d'une intrusion | Connecteurs payants (licence) ou script maison | Courriel et Slack natifs, gratuits |
+| Être notifié d'une intrusion | Connecteurs payants (licence) ou script maison | Courriel et Discord, gratuits |
 
 Le comparatif complet, les limites et les perspectives sont dans le [bilan](docs/4-bilan-elk-vs-wazuh.md).
 
@@ -79,7 +79,7 @@ flowchart LR
     J["eve.json<br/>(Suricata)"] --> A
     A -->|"1514/TCP"| M["Wazuh manager<br/>(décodeurs + règles)"]
     M --> D["dashboard"]
-    M --> N["courriel / Slack"]
+    M --> N["courriel / Discord"]
 ```
 
 ---

@@ -11,7 +11,7 @@ La chaîne ELK fonctionne (voir [partie 1](1-elk/03-detection.md#ce-que-la-parti
 | **Remonter les alertes Suricata** | Règle de « promotion » à écrire, la règle générique étant absente de la version installée | Décodeur Suricata intégré, alertes visibles directement |
 | **Surveiller l'intégrité des fichiers** | auditd + intégration, ou Elastic Defend (agent + Fleet Server) | Module syscheck natif, quelques lignes de configuration |
 | **Vérifier la conformité** | Non couvert en licence gratuite | Scan CIS automatique (42 % sur la victime) |
-| **Notifier l'administrateur** | Connecteurs courriel, Slack et webhook payants ; essai de 30 jours ou script maison | Courriel et Slack natifs et gratuits |
+| **Notifier l'administrateur** | Connecteurs courriel, Slack et webhook payants ; essai de 30 jours ou script maison | Courriel et Discord natifs et gratuits |
 | **Analyser un fichier suspect** | Pas d'équivalent sans Elastic Defend | Intégration VirusTotal native |
 
 ### En résumé

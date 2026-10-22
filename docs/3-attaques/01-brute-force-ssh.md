@@ -76,13 +76,13 @@ Cette section couvre la chaîne complète : alerte → notification → explicat
 
 ### 5.1 Alertes et notifications déclenchées
 
-| Plateforme | Règle | Niveau | Notifiée (Slack/courriel ≥ 10) |
+| Plateforme | Règle | Niveau | Notifiée (Discord/courriel ≥ 10) |
 | --- | --- | --- | --- |
 | Wazuh | **5763**, brute force SSH | 10 | ✅ oui |
 | Wazuh | **2502**, échecs répétés (via syslog-ng) | 10 | ✅ oui |
 | ELK | « Lab - Brute-force SSH » (≥ 10 échecs / IP + compte) | haute | ❌ visible dans *Security → Alerts* uniquement (connecteurs payants, voir [détection ELK](../1-elk/03-detection.md#notifications--limite-de-la-licence-gratuite)) |
 
-Les deux règles Wazuh sont de niveau 10 : elles franchissent le seuil de l'intégration Slack et du courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) sans réglage supplémentaire. L'administrateur est donc prévenu en dehors du dashboard, sans avoir à le surveiller.
+Les deux règles Wazuh sont de niveau 10 : elles franchissent le seuil de l'intégration Discord et du courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) sans réglage supplémentaire. L'administrateur est donc prévenu en dehors du dashboard, sans avoir à le surveiller.
 
 ### 5.2 Ce que reçoit l'administrateur
 

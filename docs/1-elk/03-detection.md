@@ -154,7 +154,7 @@ Les contournements possibles :
 - la licence d'essai de 30 jours, qui débloque les connecteurs, mais seulement le temps de l'essai ;
 - un script externe qui interroge `.alerts-security.alerts-default` et relaie les nouvelles alertes.
 
-Wazuh, lui, envoie les alertes par courriel et vers Slack nativement et gratuitement. C'est l'un des arguments de la bascule (voir le [bilan](../4-bilan-elk-vs-wazuh.md)) : les notifications sont traitées dans la [partie 2](../2-wazuh/01-deploiement.md#notifications).
+Wazuh, lui, envoie les alertes par courriel et vers Discord nativement et gratuitement. C'est l'un des arguments de la bascule (voir le [bilan](../4-bilan-elk-vs-wazuh.md)) : les notifications sont traitées dans la [partie 2](../2-wazuh/01-deploiement.md#notifications).
 
 ## Pourquoi pas Elastic Defend
 

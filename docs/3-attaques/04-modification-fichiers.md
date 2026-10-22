@@ -91,7 +91,7 @@ Ces niveaux sont ceux par défaut de Wazuh ; ils sont faibles parce qu'une modif
 /var/ossec/bin/wazuh-control restart
 ```
 
-À ce niveau 12, ces règles passent le seuil Slack/courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) : c'est la seule voie de notification de ce scénario, ELK étant muet.
+À ce niveau 12, ces règles passent le seuil Discord/courriel ([configuration](../2-wazuh/01-deploiement.md#notifications)) : c'est la seule voie de notification de ce scénario, ELK étant muet.
 
 ### 5.2 Ce que reçoit l'administrateur
 

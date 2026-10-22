@@ -103,7 +103,7 @@ Cette section couvre la chaîne complète : alerte → notification → explicat
 | Wazuh | **86601**, alerte Suricata (signatures ET Open SQLi / LFI / scanners) | 3 | ❌ non, sans réglage (voir ci-dessous) |
 | ELK | « Lab - Tentative d'attaque web » (*high*, risk 73) | haute | ❌ *Security → Alerts* uniquement |
 
-**Point d'attention : une alerte web ne dépasse pas le seuil par défaut.** La règle Suricata 86601 est de faible niveau (3) : avec un seuil Slack/courriel à 10, l'administrateur ne serait pas prévenu d'une attaque web. Il faut une règle locale qui rehausse le niveau des alertes de la catégorie web (`/var/ossec/etc/rules/local_rules.xml` sur le manager) :
+**Point d'attention : une alerte web ne dépasse pas le seuil par défaut.** La règle Suricata 86601 est de faible niveau (3) : avec un seuil Discord/courriel à 10, l'administrateur ne serait pas prévenu d'une attaque web. Il faut une règle locale qui rehausse le niveau des alertes de la catégorie web (`/var/ossec/etc/rules/local_rules.xml` sur le manager) :
 
 ```xml
 <group name="local,web,attack,">

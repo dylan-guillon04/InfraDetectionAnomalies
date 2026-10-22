@@ -35,13 +35,12 @@ flowchart LR
 Le serveur Wazuh tourne sur un VPS OVH, déjà utilisé pour d'autres projets. Il est donc séparé du lab, comme le serait un SOC réel.
 
 - **L'agent de la victime** joint le manager par le nom `sec.grdr.fr`, sur les ports 1514 (événements) et 1515 (enrôlement), ouverts sur le pare-feu réseau d'OVH.
-- **Le dashboard** est publié sur `wazuh.grdr.fr` par un tunnel Cloudflare, derrière une authentification Cloudflare Access. Il n'est jamais exposé directement sur Internet.
+- **Le dashboard** est publié sur `wazuh.grdr.fr`
 
 > **Pour reproduire cette partie**, remplacez `sec.grdr.fr` (manager) et `wazuh.grdr.fr` (dashboard)
 > par votre propre instance Wazuh : une VM, un VPS, ou même un déploiement local sur l'hôte.
 > Seule l'adresse du manager, passée à l'agent via `WAZUH_MANAGER` lors de l'enrôlement, doit
-> correspondre à la vôtre ; le reste du guide est identique. Le tunnel Cloudflare n'est qu'un
-> confort d'accès au dashboard, pas une nécessité.
+> correspondre à la vôtre ; le reste du guide est identique.
 
 ## Côté serveur (VPS)
 
@@ -134,14 +133,14 @@ vi /var/ossec/etc/ossec.conf
 /var/ossec/bin/wazuh-control restart
 ```
 
-### Slack
+### Discord
 
-Bonus « automatisation des alertes » : envoi de toute alerte de niveau ≥ 10.
+Automatisation des alertes : envoi de toute alerte de niveau ≥ 10.
 
 ```xml
 <integration>
-  <name>slack</name>
-  <hook_url>https://hooks.slack.com/services/XXX/YYY/ZZZ</hook_url>
+  <name>custom-discord</name>
+  <hook_url>https://discord.com/api/webhooks/XXXXXXXXXXX</hook_url>
   <level>10</level>
   <alert_format>json</alert_format>
 </integration>
@@ -190,7 +189,7 @@ volumes:
 - Le manager le joint par l'alias `wazuh-smtp`.
 - La clé DKIM est générée au premier démarrage : `docker exec <conteneur postfix> cat /etc/opendkim/keys/grdr.fr.txt`.
 
-**2. DNS de `grdr.fr`** (Cloudflare), pour que les messages ne soient pas classés en indésirables :
+**2. DNS de `grdr.fr`**, pour que les messages ne soient pas classés en indésirables :
 
 Test du relais seul, avant de toucher à Wazuh :
 
@@ -223,7 +222,7 @@ sont remplacées par :
 
 ![Bloc global après modification](img/wazuh-mail-global.png)
 
-Le seuil d'envoi passe de 12 à 10, comme pour Slack, dans le bloc `<alerts>` :
+Le seuil d'envoi passe de 12 à 10, comme pour Discord, dans le bloc `<alerts>` :
 
 ```xml
 <email_alert_level>10</email_alert_level>
